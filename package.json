@@ -1,24 +1,34 @@
 {
-  "name": "madui",
+  "name": "madui-monorepo",
+  "version": "0.1.0",
   "private": true,
-  "scripts": {
-    "build": "turbo run build",
-    "dev": "turbo run dev",
-    "lint": "turbo run lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "check-types": "turbo run check-types"
+  "type": "module",
+  "author": {
+    "name": "madui",
+    "url": "https://twitter.com/madui"
   },
-  "devDependencies": {
-    "prettier": "^3.5.3",
-    "turbo": "^2.5.3",
-    "typescript": "5.8.2"
-  },
-  "engines": {
-    "node": ">=18"
-  },
-  "packageManager": "npm@11.3.0",
+  "packageManager": "bun@1.2.13",
   "workspaces": [
     "apps/*",
     "packages/*"
-  ]
+  ],
+  "scripts": {
+    "build": "turbo run build",
+    "build:cli": "turbo --filter=madmen build",
+    "dev": "turbo run dev --parallel",
+    "cli:build": "bun --filter=cli build",
+    "cli:dev": "bun --filter=cli dev",
+    "lint": "turbo run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "check-types": "turbo run check-types",
+    "test": "turbo run test"
+  },
+  "devDependencies": {
+    "@types/node": "22.15.19",
+    "@types/react": "19.1.4",
+    "@types/react-dom": "19.1.5",
+    "prettier": "^3.5.3",
+    "turbo": "^2.5.3",
+    "typescript": "5.8.3"
+  }
 }
