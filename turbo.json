@@ -5,6 +5,10 @@
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "env" : [
+        "NODE_ENV",
+        "REGISTRY_URL"
+      ],
       "outputs": [".next/**", "!.next/cache/**"]
     },
     "lint": {

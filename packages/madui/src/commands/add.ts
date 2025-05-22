@@ -1,8 +1,15 @@
 import path from "path";
 import isUrl from "@/utils/isUrl";
 import { getRegistryItem } from "@/registry/api"
-import { Command } from "commander";
+import { registryItemTypeSchema } from "@/registry/schema"
+// import { addComponents } from "@/utils/add-components"
+import { highlighter } from "@/utils/highlighter";
+import { logger } from "@/utils/logger"
+import { Command, option } from "commander";
+import prompts from "prompts";
 import { z } from "zod";
+
+const DEPRECATED_COMPONENTS = []
 
 export const addOptionsSchema = z.object({
   components: z.array(z.string()).optional(),
@@ -47,25 +54,62 @@ export const add = new Command()
   .option("--no-git", "do not initialise a git repository", false)
   .action(async (components: any , opts: any) => {
     try {
-      const parsedOptions = addOptionsSchema.parse({
+      const options = addOptionsSchema.parse({
         components, 
         cwd: path.resolve(opts.cwd || process.cwd()), // where this return the cwd
         ...opts
       })
 
+      const v = options.verbose
+
       let itemType: z.infer<typeof registryItemTypeSchema> | undefined = undefined 
 
       if(components.length > 0 && isUrl(components[0])) {
         const item = await getRegistryItem(components[0], "")
-        itemType = item.type
+        itemType = item?.type
       }
 
+      if (
+        !options.yes &&
+        (itemType === "registry:style" || itemType === "registry:theme")
+      ) {
+
+        logger.break()
+        if(v) logger.info(`You are about to add a ${itemType} component. This may overwrite existing files.`)
+
+        const { confirm } = await prompts({
+          type: "confirm",
+          name: "confirm",
+          message: highlighter.info(
+            `Adding new ${itemType.replace('registry:', "")} component. \nExisiting CSS Variables and components will be overwritten. ${highlighter.warn('Continue?')}`,
+          )
+        })
+
+        if (!confirm) {
+          logger.break()
+          logger.info("Installation cancelled.")
+          logger.break()
+          process.exit(1)
+        }
+      }
+
+      if (v) logger.info(`Adding ${itemType} component...`)
+
+      // if (!options.components?.length) {
+      //   options.components = await promptForRegistryComponents(options)
+      // }
       
+
+      const projectInfo = await getProjectInfo(options.cwd)
+
+      if (projectInfo.tailwindVersion === 'v4') {
+        const 
+      }
 
 
 
     } catch (error) {
-
+      logger.error("Error parsing options:", error)
     }
   })
   
