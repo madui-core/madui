@@ -1,10 +1,14 @@
 import path from 'path'
-import { FRAMEWORK, Framework } from '@/utils/framework'
+import { FRAMEWORKS, Framework } from '@/utils/framework'
 import {
-  Config
+  Config,
+  RawConfig,
+  getConfig,
+  resolveConfig,
 } from '@/utils/get-config'
 import fg from 'fast-glob'
 import fs from 'fs-extra'
+import { loadConfig } from "tsconfig-paths"
 import { z } from 'zod'
 
 export type TailwindVersion = "v3" | "v4"
@@ -62,11 +66,95 @@ export async function getProjectInfo(cwd: string): Promise<ProjectInfo | null> {
     getPackageInfo(cwd, false),
   ])
 
+  // TODO: try finding better way to detect if the project is App Route and Pages Route
+  const isUsingAppDir = await fs.pathExists(
+    path.resolve(cwd, `${isSrcDir ? 'src/' : ""}app`)
+  )
 
+  const type: ProjectInfo = {
+    framework: FRAMEWORKS['manual'],
+    isSrcDir,
+    isRSC: false,
+    isTsx,
+    tailwindConfigFile,
+    tailwindCssFile,
+    tailwindVersion,
+    aliasPrefix,
+  }
+
+  // NextJS
+  if (configFiles.find((file: string) => file.startsWith("next.config."))?.length){
+    type.framework = isUsingAppDir
+      ? FRAMEWORKS['next-app']
+      : FRAMEWORKS['next-pages']
+    type.isRSC = isUsingAppDir
+    return type
+  }
+
+  // Astro.
+  if (configFiles.find((file: string) => file.startsWith("astro.config."))?.length) {
+    type.framework = FRAMEWORKS["astro"]
+    return type
+  }
+
+  // Gatsby.
+  if (configFiles.find((file: string) => file.startsWith("gatsby-config."))?.length) {
+    type.framework = FRAMEWORKS["gatsby"]
+    return type
+  }
+
+  // Laravel.
+  if (configFiles.find((file: string) => file.startsWith("composer.json"))?.length) {
+    type.framework = FRAMEWORKS["laravel"]
+    return type
+  }
+
+  // Remix.
+  if (
+    Object.keys(packageJson?.dependencies ?? {}).find((dep) =>
+      dep.startsWith("@remix-run/")
+    )
+  ) {
+    type.framework = FRAMEWORKS["remix"]
+    return type
+  }
+
+  // TanStack Start.
+  if (
+    configFiles.find((file: string) => file.startsWith("app.config."))?.length &&
+    [
+      ...Object.keys(packageJson?.dependencies ?? {}),
+      ...Object.keys(packageJson?.devDependencies ?? {}),
+    ].find((dep) => dep.startsWith("@tanstack/start"))
+  ) {
+    type.framework = FRAMEWORKS["tanstack-start"]
+    return type
+  }
+
+
+  // React Router
+  if (configFiles.find((file: string) => file.startsWith("react-router.config."))?.length) {
+    type.framework = FRAMEWORKS['react-router']
+    return type
+  }
+
+  // Vite.
+  // Some Remix templates also have a vite.config.* file.
+  // their is a chances of it get caught by the Remix check above.
+  if (configFiles.find((file: string) => file.startsWith("vite.cinfig."))?.length || packageJson?.vite) {
+    type.framework = FRAMEWORKS['vite']
+    return type
+  }
+
+  return type
 }
 
-export async function getTailwindVersion(cwd: string): Promise<TailwindVersion | null> {
 
+
+export async function getTailwindVersion(cwd: string): Promise<TailwindVersion | null> {
+  const [packageJson, config] Promise.all([
+    getPackage
+  ])
 }
 
 
