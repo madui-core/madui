@@ -1,0 +1,2 @@
+export const MISSING_PROJECT_OR_EMPTY_PROJECT = "1"
+export const MISSING_COMPONENTS_CONFIG = "2"

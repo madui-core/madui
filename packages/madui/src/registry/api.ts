@@ -1,10 +1,11 @@
-import path from 'path'
+// import path from 'path'
 import isUrl from '@/utils/isUrl'
 import { handleError } from '@/utils/handle-error' 
 import { highlighter } from '@/utils/highlighter'
 import { logger } from '@/utils/logger'
+import { Verbose } from '@/verbose/logger'
 import axios from 'axios'
-import { z } from 'zod'
+// import { z } from 'zod'
 
 import {
   registryItemSchema
@@ -41,9 +42,12 @@ export const BASE_COLORS = [
 
 export async function getRegistryItem(name: string, style: string) {
   try {
+    Verbose(`Fetching registry item ${isUrl(name)?'from url':'' } ${ highlighter.info(name)}`)
     const response = await fetchRegistry([
       isUrl(name) ? name : `styles/${style}/${name}.json`,
     ])
+
+    if (!response) Verbose(`No registry item found`) 
 
     return registryItemSchema.parse(response);
   } catch (error) {

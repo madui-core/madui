@@ -4,8 +4,11 @@ import { getRegistryItem } from "@/registry/api"
 import { registryItemTypeSchema } from "@/registry/schema"
 import { getProjectInfo } from "@/utils/get-project-info"
 // import { addComponents } from "@/utils/add-components"
+import { preFlightAdd } from '@/preflights/preflight-add'
 import { highlighter } from "@/utils/highlighter";
 import { logger } from "@/utils/logger"
+import { setVerbose } from "@/verbose/config";
+import { Verbose } from "@/verbose/logger";
 import { Command, option } from "commander";
 import prompts from "prompts";
 import { z } from "zod";
@@ -112,13 +115,14 @@ export const add = new Command()
         ...opts
       })
 
-      const v = options.verbose
+      setVerbose(options.verbose)
 
       let itemType: z.infer<typeof registryItemTypeSchema> | undefined = undefined 
 
       if(components.length > 0 && isUrl(components[0])) {
         const item = await getRegistryItem(components[0], "")
         itemType = item?.type
+        Verbose(`Item type: ${itemType}`)
       }
 
       if (
@@ -127,13 +131,13 @@ export const add = new Command()
       ) {
 
         logger.break()
-        if(v) logger.info(`You are about to add a ${itemType} component. This may overwrite existing files.`)
+        Verbose(`You are about to add a ${itemType} component. This may overwrite existing files.`)
 
         const { confirm } = await prompts({
           type: "confirm",
           name: "confirm",
           message: highlighter.info(
-            `Adding new ${itemType.replace('registry:', "")} component. \nExisiting CSS Variables and components will be overwritten. ${highlighter.warn('Continue?')}`,
+            `Adding new ${itemType.replace('registry:', "")} component. \nExisting CSS Variables and components will be overwritten. ${highlighter.warn('Continue?')}`,
           )
         })
 
@@ -145,8 +149,6 @@ export const add = new Command()
         }
       }
 
-      if (v) logger.info(`Adding ${itemType} component...`)
-
       // if (!options.components?.length) {
       //   options.components = await promptForRegistryComponents(options)
       // }
@@ -155,9 +157,11 @@ export const add = new Command()
        * TODO: handle tailwind version missmatch
        * Posibly, by running install tailwind@latest
        */
-       
+
+      Verbose(`Getting project info`)
       const projectInfo = await getProjectInfo(options.cwd)
 
+      Verbose(`Checking for DEPRECATED components`)
       if (projectInfo.tailwindVersion === 'v4') {
         const deprecatedComponents = createDeprecatedComponentsSet(DEPRECATED_COMPONENTS)
         if (deprecatedComponents?.length) {
@@ -170,12 +174,89 @@ export const add = new Command()
         }
       }
 
+      let {errors, config} = await preFlightAdd(options)   
+      if (errors.MISSING_COMPONENTS_CONFIG) {
+        const { proceed } = await prompts({
+          type: "confirm",
+          name: "proceed",
+          message: `You need to create a ${highlighter.info(
+            "components.json"
+          )} file to add components. Proceed?`,
+          initial: true,
+        })
+
+        if (!proceed) {
+          logger.break()
+          process.exit(1)
+        }
+        
+        config = await runInit({
+          cwd: options.cwd,
+          yes: true,
+          force: true,
+          defaults: false,
+          skipPreflight: false,
+          silent: true,
+          isNewProject: false,
+          srcDir: options.srcDir,
+          cssVariables: options.cssVariables,
+          style: "index",
+        })
+
+        let shouldUpdateAppIndex = false
+
+        if (errors.MISSING_DIR_OR_EMPTY_PROJECT) {
+          const { projectPath, template } = await createProject({
+            cwd: options.cwd,
+            force: options.force,
+            srcDir: options.srcDir,
+            components: options.components,
+          })
+
+          if(!projectPath) {
+            logger.break()
+            logger.error("Project path not found.")
+            process.exit(1)
+          }
+
+          options.cwd = projectPath
+          if (template === "next-monorepo") {
+            options.cwd = path.resolve(options.cwd, "apps/web")
+            config = await getConfig(options.cwd)
+          }
+          else {
+            config = await runInit({
+              cwd: options.cwd,
+              yes: true,
+              force: true,
+              defaults: false,
+              skipPreflight: true,
+              silent: true,
+              isNewProject: true,
+              srcDir: options.srcDir,
+              cssVariables: options.cssVariables,
+              style: "index",
+            })
+
+            shouldUpdateAppIndex =
+              options.components?.length === 1 &&
+              !!options.components[0].match(/\/chat\/b\//)
+            }
+        }
+
+        if (!config) {
+        throw new Error(
+          `Failed to read config at ${highlighter.info(options.cwd)}.`
+          )
+        }
+      }
+
       /**
        * @Continue from here
-       * 1 preflight add
-       * 2 create Project
-       * 3 add Components
+       * 1 create Project
+       * 2 add Components
        */
+      
 
 
 

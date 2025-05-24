@@ -4,6 +4,9 @@ export const logger = {
   error: (...args: any[]) => {
     console.error(highlighter.error(args.join(" ")))
   },
+  verbose: (...args: any[]) => {
+    console.log(highlighter.verbose(args.join(" ")))
+  },
   warn: (...args: any[]) => {
     console.log(highlighter.warn(args.join(" ")))
   },
