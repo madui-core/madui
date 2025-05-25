@@ -1,5 +1,6 @@
 import path from "path";
 import isUrl from "@/utils/isUrl";
+import { runInit }  from "@/commands/init";
 import { getRegistryItem } from "@/registry/api"
 import { registryItemTypeSchema } from "@/registry/schema"
 import { getProjectInfo } from "@/utils/get-project-info"
@@ -66,6 +67,12 @@ const createDeprecatedComponentsSet = (deprecatedComponents: Record<string, Reco
     );
 };
 
+/**
+ * havent imoplemented
+ * - Git
+ * - noGit
+ * - noInstall
+ */
 export const addOptionsSchema = z.object({
   components: z.array(z.string()).optional(),
   yes: z.boolean(),
@@ -174,7 +181,9 @@ export const add = new Command()
         }
       }
 
-      let {errors, config} = await preFlightAdd(options)   
+      let {errors, config} = await preFlightAdd(options)
+
+      // no components.json file prompt the user to run init command
       if (errors.MISSING_COMPONENTS_CONFIG) {
         const { proceed } = await prompts({
           type: "confirm",

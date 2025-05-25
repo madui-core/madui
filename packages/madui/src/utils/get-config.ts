@@ -1,3 +1,9 @@
+/**
+ * 
+ * This is components.json config
+ * 
+ */
+
 import path from 'path'
 import { getProjectInfo } from "@/utils/get-project-info"
 import { highlighter } from '@/utils/highlighter'

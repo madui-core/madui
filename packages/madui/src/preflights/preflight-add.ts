@@ -13,6 +13,12 @@ export async function preFlightAdd(options: z.infer<typeof addOptionsSchema>)
     errors: Record<string, boolean>,
     config: Config | null
 }> {
+  /**
+   * Here we checking if
+   * - project exists
+   * - package.json exists
+   * - components.json exsits
+   */
   const errors: Record<string, boolean> = {}
   
   Verbose('checking preflights checking...')
@@ -30,7 +36,7 @@ export async function preFlightAdd(options: z.infer<typeof addOptionsSchema>)
     }
   }
 
-  Verbose('checking tsconfig.json...')
+  Verbose('checking components.json...')
   //checking for components.json
   if (!fs.existsSync(path.resolve(options.cwd, 'components.json'))) {
     errors[ERRORS.MISSING_COMPONENTS_CONFIG] = true
@@ -56,7 +62,7 @@ export async function preFlightAdd(options: z.infer<typeof addOptionsSchema>)
       \nRun ${highlighter.info('init')} command to initialize a new project with a valid ${highlighter.info('components.json')} file.
     `)
     logger.error(`
-      Learn more at ${highlighter.info('https://madui.dev/docs/')}  
+      Learn more at ${highlighter.info('https://madui.dev.vercel.app/docs/')}  
     `)
     logger.break()
     process.exit(1)
