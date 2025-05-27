@@ -5,6 +5,7 @@ import { highlighter } from '@/utils/highlighter'
 import { logger } from '@/utils/logger'
 import { Verbose } from '@/verbose/logger'
 import * as ERRORS from '@/utils/errors'
+import { spinner } from '@/utils/spinner'
 import fs from 'fs-extra'
 import { z } from 'zod'
 
@@ -21,7 +22,6 @@ export async function preFlightAdd(options: z.infer<typeof addOptionsSchema>)
    */
   const errors: Record<string, boolean> = {}
   
-  Verbose('checking preflights checking...')
   Verbose('checking projects existence & package.json...')
   // Check if the path exists
   // and if project exist (by looking package.json)
@@ -35,6 +35,7 @@ export async function preFlightAdd(options: z.infer<typeof addOptionsSchema>)
       config: null,
     }
   }
+
 
   Verbose('checking components.json...')
   //checking for components.json

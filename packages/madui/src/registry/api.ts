@@ -13,7 +13,7 @@ import {
 
 const REGISTRY_URL = process.env.REGISTRY_URL ?? 'http://localhost:3000'
 
-// const registryCache = new Map<string, Promise<any>>()
+const registryCache = new Map<string, Promise<any>>()
 
 
 export const BASE_COLORS = [
@@ -40,12 +40,20 @@ export const BASE_COLORS = [
 ] as const
 
 
-export async function getRegistryItem(name: string, style: string) {
+export async function getRegistryItem(name: string, style: string, keys: Set<string> | null = null) {
   try {
     Verbose(`Fetching registry item ${isUrl(name)?'from url':'' } ${ highlighter.info(name)}`)
-    const response = await fetchRegistry([
-      isUrl(name) ? name : `styles/${style}/${name}.json`,
-    ])
+    const url =
+      isUrl(name)
+        ? name
+        : `${keys? 'api/' : ''}
+        styles/${style}/${name}.json
+        ${keys
+          && (keys.size === 1
+            ? `?key=${Array.from(keys)[0]}`
+            : `?keys=${Array.from(keys).join(',')}`)}`
+
+    const response = await fetchRegistry([url])
 
     if (!response) Verbose(`No registry item found`) 
 
@@ -79,8 +87,16 @@ export async function fetchRegistry(paths: string[]) {
       paths.map( async (path) => {
         const url = getRegistryUrl(path)
 
-        // logger.info(`Fetching registry item from ${highlighter.info(url)}`)
-
+        Verbose('Checking registry cache...')
+        if (registryCache.has(url)) {
+          return registryCache.get(url)
+        }
+        
+        Verbose(`Fetching registry item from ${highlighter.info(url)}`)
+        /**
+         * TODO: for backend, currently using NextJS
+         * we are planning to move to node.js 
+         */
         const fetch = (async () => {
           const response = await axios.get(url, {
             headers: {
@@ -131,6 +147,8 @@ export async function fetchRegistry(paths: string[]) {
             )
           }
 
+          registryCache.set(url, Promise.resolve(data))
+          Verbose(`Fetched registry item ${highlighter.info(data.name)}`)
           return data
         })
 

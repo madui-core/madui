@@ -43,7 +43,7 @@ export async function getProjectInfo(cwd: string): Promise<ProjectInfo> {
   // therefore ask user to `run the install --save-dev tailwindcss`
 
   if (!tailwindVersion) {
-    logger.info(highlighter.error("Tailwind CSS is not installed, installed."))
+    logger.info(highlighter.error("Tailwind CSS is not installed, install it by running `npm install -D tailwindcss` or `yarn add -D tailwindcss`"))
   }
 
   const [

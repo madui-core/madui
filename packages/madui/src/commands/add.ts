@@ -13,6 +13,7 @@ import { Verbose } from "@/verbose/logger";
 import { Command, option } from "commander";
 import prompts from "prompts";
 import { z } from "zod";
+import { handleError } from "@/utils/handle-error";
 
 const LASTEST_VERSION_TAILWIND = process.env.LASTEST_VERSION_TAILWIND ?? "v4"
 
@@ -270,7 +271,8 @@ export const add = new Command()
 
 
     } catch (error) {
-      logger.error("Error parsing options:", error)
+      logger.break()
+      handleError(error)
     }
   })
   

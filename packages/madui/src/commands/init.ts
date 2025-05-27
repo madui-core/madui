@@ -1,10 +1,19 @@
 import path from 'path'
 import { promises } from 'fs'
+import isUrl from '@/utils/isUrl'
 import { TEMPLATES } from '@/utils/create-project'
-import { BASE_COLORS } from '@/registry/api'
+import * as ERRORS from '@/utils/errors'
+import { BASE_COLORS, getRegistryItem } from '@/registry/api'
 import { logger } from '@/utils/logger'
+import { setVerbose } from '@/verbose/config'
+import { highlighter } from '@/utils/highlighter'
+import { handleError } from '@/utils/handle-error'
+import { Verbose } from '@/verbose/logger'
 import { Command } from 'commander'
 import { z } from 'zod'
+import { getProjectInfo } from '@/utils/get-project-info'
+import { getConfig } from '@/utils/get-config'
+import { preFlightInit } from '@/preflights/preflight-init'
 
 
 export const initOptionsSchema = z.object({
@@ -66,7 +75,7 @@ export const init = new Command()
   .option('-d, --defaults', 'Use default Configuration', false)
   .option('-c, --cwd <cwd>', 'add the working directory, default to current working directory', process.cwd)
   .option('-s, --silent', 'mute the output', false)
-  .option('-v', '--verbose', 'output the full working', false)
+  .option('-v, --verbose', 'output the full working', false)
   .option(
     "--src-dir",
     "use the src directory when creating a new project.",
@@ -78,7 +87,7 @@ export const init = new Command()
   )
   .option("--css-variables", "use css variables for theming.", true)
   .option("--no-css-variables", "do not use css variables for theming.")
-  .action(async (components, opts) => {
+  .action(async (components: any, opts: any) => {
     try {
       const options = initOptionsSchema.parse({
         cwd: path.resolve(opts.cwd),
@@ -88,13 +97,66 @@ export const init = new Command()
         ...opts,
       })
 
+      setVerbose(options.verbose)
+
+      if(components.length > 0 && isUrl(components[0])) {
+        const item = await getRegistryItem(components[0], "", new Set(['type', 'extends']))
+
+        if(item?.type === 'registry:style') {
+          options.baseColor = 'neutral'
+          options.style = item.extends ?? "index"
+        }
+      }
+
+      await runInit(options)
+
+      logger.success(`${highlighter.success('Success!')}\n Project initilized successfully \nNow be happy and forget about shadcn🙂`)
+      logger.break()
 
     } catch (error) {
       logger.break()
-      logger.error(`Failed to initialize project: ${error instanceof Error ? error.message : 'Unknown error'}`)
-      if (opts.verbose) {
-        logger.error(error instanceof Error ? error.stack : 'No stack trace available')
-      }
-      process.exit(1)
+      handleError(error)
     }
   })
+
+async function runInit(
+  options: z.infer<typeof initOptionsSchema> & {
+    skipPreFlight?: boolean
+  }) {
+  
+  let projectInfo
+  let newProjectTemplate
+
+  if(!options.skipPreFlight) {
+    const preflight = await preFlightInit(options)
+    
+    if(preflight.errors[ERRORS.MISSING_PROJECT_OR_EMPTY_PROJECT]) {
+      Verbose(`Project does not exist or is empty. Creating a new project...`)
+      const { projectPath, template } = await createNewProject(options)
+      if (!projectPath) {
+        Verbose(`Failed to create new project.`)
+        process.exit(1)
+      }
+      options.cwd = projectPath
+      options.isNewProject = true
+      newProjectTemplate = template
+    }
+
+    projectInfo = preflight.projectInfo
+  } else {
+    Verbose(`Skipping preflight checks...`)
+    projectInfo = await getProjectInfo(options.cwd)
+  }
+
+  if (newProjectTemplate === 'next-monorepo') {
+    options.cwd = path.resolve(options.cwd, 'apps/web')
+    return await getConfig(options.cwd)
+  }
+
+
+
+
+
+  
+  return null
+}

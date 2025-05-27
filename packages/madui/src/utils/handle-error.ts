@@ -4,7 +4,7 @@ import { z } from 'zod'
 
 export function handleError(error: unknown) {
   logger.error(
-    'Something boke, please check the error below for details.'
+    'Something broke, please check the error below for details.'
   )
   logger.error('if you think this is a bug, please open an issue on GitHub (here https://github.com/Anas-github-acc/madui/issues/new).')
   logger.break()
