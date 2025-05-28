@@ -1,7 +1,7 @@
 import path from 'path'
 import { promises } from 'fs'
 import isUrl from '@/utils/isUrl'
-import { TEMPLATES } from '@/utils/create-project'
+import { createProject, TEMPLATES } from '@/utils/create-project'
 import * as ERRORS from '@/utils/errors'
 import { BASE_COLORS, getRegistryItem } from '@/registry/api'
 import { logger } from '@/utils/logger'
@@ -132,7 +132,7 @@ async function runInit(
     
     if(preflight.errors[ERRORS.MISSING_PROJECT_OR_EMPTY_PROJECT]) {
       Verbose(`Project does not exist or is empty. Creating a new project...`)
-      const { projectPath, template } = await createNewProject(options)
+      const { projectPath, template } = await createProject(options)
       if (!projectPath) {
         Verbose(`Failed to create new project.`)
         process.exit(1)

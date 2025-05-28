@@ -10,10 +10,16 @@ import axios from 'axios'
 import {
   registryItemSchema
 } from './schema'
+import { FileX } from 'lucide-react'
 
 const REGISTRY_URL = process.env.REGISTRY_URL ?? 'http://localhost:3000'
 
-const registryCache = new Map<string, Promise<any>>()
+const registryCache = new Map<string,
+    {
+      response: Promise<any>,
+      flexFlex: boolean,
+    }
+  >()
 
 
 export const BASE_COLORS = [
@@ -42,7 +48,7 @@ export const BASE_COLORS = [
 
 export async function getRegistryItem(name: string, style: string, keys: Set<string> | null = null) {
   try {
-    Verbose(`Fetching registry item ${isUrl(name)?'from url':'' } ${ highlighter.info(name)}`)
+    Verbose(`Fetching registry item ${isUrl(name)?'from url':'' } ${highlighter.info(name)}`)
     const url =
       isUrl(name)
         ? name
@@ -53,7 +59,7 @@ export async function getRegistryItem(name: string, style: string, keys: Set<str
             ? `?key=${Array.from(keys)[0]}`
             : `?keys=${Array.from(keys).join(',')}`)}`
 
-    const response = await fetchRegistry([url])
+    const response = await fetchRegistry([url], !!keys)
 
     if (!response) Verbose(`No registry item found`) 
 
@@ -72,7 +78,6 @@ export async function getRegistryBaseColors() {
 // export async function getRegistryBaseColor(baseColor: string) {
 //   try {
 //     const [result] = await fetchRegistry([`colors/${baseColor}.json`])
-
 //     return registryBaseColorSchema.parse(result)
 //   } catch (error) {
 //     handleError(error)
@@ -81,7 +86,7 @@ export async function getRegistryBaseColors() {
 // }
 
 
-export async function fetchRegistry(paths: string[]) {
+export async function fetchRegistry(paths: string[], flexFetch = false) {
   try {
     const res = await Promise.all(
       paths.map( async (path) => {
@@ -89,9 +94,15 @@ export async function fetchRegistry(paths: string[]) {
 
         Verbose('Checking registry cache...')
         if (registryCache.has(url)) {
-          return registryCache.get(url)
+          const cachedItem = registryCache.get(url)
+          if (
+            !(!flexFetch && cachedItem?.flexFlex)
+          ) {
+            return registryCache.get(url)
+          }
         }
         
+
         Verbose(`Fetching registry item from ${highlighter.info(url)}`)
         /**
          * TODO: for backend, currently using NextJS
@@ -147,7 +158,11 @@ export async function fetchRegistry(paths: string[]) {
             )
           }
 
-          registryCache.set(url, Promise.resolve(data))
+          registryCache.set(url,
+            {
+              response: Promise.resolve(data),
+              flexFlex: flexFetch
+            })
           Verbose(`Fetched registry item ${highlighter.info(data.name)}`)
           return data
         })
@@ -155,6 +170,12 @@ export async function fetchRegistry(paths: string[]) {
         return fetch()
       })
     )
+
+    if (res.some(item => item === undefined)) {
+      throw new Error(
+        `Failed to fetch some registry items. Please check your network connection and try again.`
+      )
+    }
 
     return res
   } catch (error) {

@@ -81,15 +81,7 @@ export async function GET(request: Request, { params }: { params: { style: strin
     const { searchParams } = new URL(request.url);
     const key = searchParams.get('key');
     const keys = searchParams.get('keys');
-    const getKeys = searchParams.get('getKeys');
 
-    // Case 1: Get all keys
-    if (getKeys === 'true') {
-      const allKeys = await streamJsonKeysList(filePath);
-      return NextResponse.json({ keys: allKeys }, {
-        headers: { 'Cache-Control': 'public, max-age=3600, s-maxage=3600' },
-      });
-    }
 
     // Case 2: Fetch multiple keys
     if (keys) {
