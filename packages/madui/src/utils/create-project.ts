@@ -146,7 +146,6 @@ export async function createProject(
   try {
     await fs.access(projectDir, fs.constants.F_OK);
   
-    // Folder exists - exit immediately
     logger.break();
     logger.error(`A project with the name ${highlighter.info(projectName)} already exists.`);
     logger.error("Please choose a different name and try again.");
