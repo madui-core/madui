@@ -132,7 +132,7 @@ async function runInit(
     
     if(preflight.errors[ERRORS.MISSING_PROJECT_OR_EMPTY_PROJECT]) {
       Verbose(`Project does not exist or is empty. Creating a new project...`)
-      const { projectPath, template } = await createProject(options)
+      const { projectName, projectPath, template } = await createProject(options)
       if (!projectPath) {
         Verbose(`Failed to create new project.`)
         process.exit(1)
@@ -148,10 +148,10 @@ async function runInit(
     projectInfo = await getProjectInfo(options.cwd)
   }
 
-  if (newProjectTemplate === 'next-monorepo') {
-    options.cwd = path.resolve(options.cwd, 'apps/web')
-    return await getConfig(options.cwd)
-  }
+  // if (newProjectTemplate === 'next-monorepo') {
+  //   options.cwd = path.resolve(options.cwd, 'apps/web')
+  //   return await getConfig(options.cwd)
+  // }
 
 
 
