@@ -1,5 +1,12 @@
 import { z } from 'zod'
 
+export const stylesSchema = z.array(
+  z.object({
+    name: z.string(),
+    label: z.string(),
+  })
+)
+
 export const registryItemTypeSchema = z.enum([
   "registry:lib",
   "registry:block",
@@ -58,7 +65,6 @@ export const registryItemCssSchema = z.record(
 )
 
 
-
 export const registryItemSchema = z.object({
   $schema: z.string().optional(),
   extends: z.string().optional(),
@@ -69,11 +75,13 @@ export const registryItemSchema = z.object({
   author: z.string().min(2).optional(),
   description: z.string().optional(),
   dependencies: z.array(z.string()).optional(),
-  devDependencies:
-   z.array(z.string()).optional(),
+  devDependencies: z.array(z.string()).optional(),
+  registryDependencies: z.array(z.string()).optional(),
   files: z.array(registryItemFileSchema).optional(),
   tailwind: registryItemTailwindSchema.optional(),
   cssVars: registryItemCssVarsSchema.optional(),
   css: registryItemCssSchema.optional(),
   meta: z.record(z.string(), z.any()).optional(),
 })
+
+export const registryIndexSchema = z.array(registryItemSchema)

@@ -4,14 +4,15 @@ import {
   Config,
   RawConfig,
   getConfig,
-  resolveConfig,
+  resolveConfigPaths,
 } from '@/utils/get-config'
+import { loadConfig } from "tsconfig-paths"
+import { type PackageJson } from "type-fest"
 import { getPackageInfo } from '@/utils/get-package-info'
 import { highlighter } from './highlighter'
 import { logger } from './logger'
 import fg from 'fast-glob'
 import fs from 'fs-extra'
-import { loadConfig } from "tsconfig-paths"
 import { z } from 'zod'
 
 const LIVE_HOST = process.env.MADUI_HOST || "http://localhost:3000"
@@ -24,7 +25,7 @@ export type ProjectInfo = {
   isRSC: boolean
   isTsx: boolean
   tailwindConfigFile: string | null
-  tailwindCssFile: {file: string, versionMissMatch: boolean} | null
+  tailwindCssFile: {file: string, } | null
   tailwindVersion: TailwindVersion
   aliasPrefix: string | null
 }
@@ -38,13 +39,8 @@ const TS_CONFIG_SCHEMA = z.object({
 })
 
 export async function getProjectInfo(cwd: string): Promise<ProjectInfo> {
-  const tailwindVersion: TailwindVersion = await getTailwindVersion(cwd)
   // TODO: since tailwind is important and finding tailwindCssFile and Config make no sense if tailwind is not install
   // therefore ask user to `run the install --save-dev tailwindcss`
-
-  if (!tailwindVersion) {
-    logger.info(highlighter.error("Tailwind CSS is not installed, install it by running `npm install -D tailwindcss` or `yarn add -D tailwindcss`"))
-  }
 
   const [
     configFiles,
@@ -66,10 +62,17 @@ export async function getProjectInfo(cwd: string): Promise<ProjectInfo> {
     fs.pathExists(path.resolve(cwd, 'src')),
     isTypeScriptProject(cwd),
     getTailwindConfigFile(cwd),
-    getTailwindCssFile(cwd, tailwindVersion),
+    getTailwindCssFile(cwd),
     getTsConfigAliasPrefix(cwd),
     getPackageInfo(cwd, false),
   ])
+
+
+  const tailwindVersion = getTailwindVersion(cwd, packageJson)
+
+  if (!tailwindVersion) {
+    logger.info(highlighter.error("Tailwind CSS is not installed, install it by running `npm install -D tailwindcss` or `yarn add -D tailwindcss`"))
+  }
 
   // TODO: try finding better way to detect if the project is App Route and Pages Route
   const isUsingAppDir = await fs.pathExists(
@@ -83,7 +86,7 @@ export async function getProjectInfo(cwd: string): Promise<ProjectInfo> {
     isTsx,
     tailwindConfigFile,
     tailwindCssFile,
-    tailwindVersion,
+    tailwindVersion: tailwindConfigFile ? tailwindVersion : 'v4',
     aliasPrefix,
   }
 
@@ -155,17 +158,7 @@ export async function getProjectInfo(cwd: string): Promise<ProjectInfo> {
 }
 
 
-export async function getTailwindVersion(cwd: string): Promise<TailwindVersion> {
-  const [packageJson, config] = await Promise.all([
-    getPackageInfo(cwd, false),
-    getConfig(cwd)
-  ])
-
-  // If the config file is empty, then assuming that it's a v4 project.
-  if (config?.tailwind?.config === "") {
-    return "v4"
-  }
-
+export function getTailwindVersion(cwd: string, packageJson: PackageJson | null): TailwindVersion {
   if (
     !packageJson?.dependencies?.tailwindcss &&
     !packageJson?.devDependencies?.tailwindcss
@@ -186,10 +179,9 @@ export async function getTailwindVersion(cwd: string): Promise<TailwindVersion> 
   return 'v4'
 }
 
-export async function getTailwindCssFile(cwd: string, tailwindVersion: TailwindVersion)
+export async function getTailwindCssFile(cwd: string)
 : Promise<{
   file: string,
-  versionMissMatch: boolean
 } | null > {
   const files = await fg.glob(["**/.css", "**/.scss"],
     {
@@ -204,18 +196,11 @@ export async function getTailwindCssFile(cwd: string, tailwindVersion: TailwindV
     const contents = await fs.readFile(path.resolve(cwd, file), "utf-8")
      if (
       contents.includes(`@import "tailwindcss"`) ||
-      contents.includes(`@import 'tailwindcss'`)
-    ) {
-      return {
-        file: file,
-        versionMissMatch: !(tailwindVersion !== "v4")
-      }
-    } else if (
+      contents.includes(`@import 'tailwindcss'`) ||
       contents.includes(`@tailwind base`)
     ) {
       return {
-        file: file,
-        versionMissMatch: false
+        file: file
       }
     }
   }
@@ -239,7 +224,7 @@ export async function getTailwindConfigFile(cwd: string) {
 
 
 export async function getTsConfigAliasPrefix(cwd: string) {
-  const tsConfig = await loadConfig(cwd)
+  const tsConfig = loadConfig(cwd)
 
   if (
     tsConfig?.resultType === "failed" ||
@@ -293,7 +278,6 @@ export async function getTsConfig(cwd: string) {
     if(res.error) {
       return null
     }
-
     return res.data
   }
 
@@ -305,17 +289,54 @@ export async function getProjectConfig(
   cwd: string,
   defaultProjectInfo: ProjectInfo | null = null
 ): Promise<Config | null> {
-  // Check for existing component config.
-  const [existingConfig, projectInfo] = await Promise.all([
-    getConfig(cwd),
-    !defaultProjectInfo
-      ? getProjectInfo(cwd)
-      : Promise.resolve(defaultProjectInfo),
-  ])
+  const controller = new AbortController();
 
-  if (existingConfig) {
-    return existingConfig
+  /**
+   * @Possible_Error
+   * here i have used abort to make the result faster
+   */
+
+  //checking for components.json existence
+  const configPromise = new Promise((resolve, reject) => {
+    const configCall = getConfig(cwd);
+    
+    configCall
+      .then((result) => {
+        resolve(result);
+        if (result != null) {
+          controller.abort();
+        }
+      })
+      .catch(reject);
+  });
+
+  // projectInfo to create config if components.json does not exist
+  const projectInfoPromise = new Promise((resolve, reject) => {
+    const call = !defaultProjectInfo
+      ? getProjectInfo(cwd)
+      : Promise.resolve(defaultProjectInfo);
+    
+    controller.signal.addEventListener('abort', () => {
+      reject(null); // getting rejected if config is already resolved
+    });
+    
+    call.then(resolve).catch(reject);
+  });
+
+
+
+  const results = await Promise.allSettled([configPromise, projectInfoPromise]);
+  
+  const existingConfig = results[0].status === 'fulfilled' ? results[0].value : null;
+  
+  // Return existingConfig if non-null
+  if (existingConfig != null ) {
+    return existingConfig as Config;
   }
+
+  // If getConfig is null, check getProjectInfo result
+  const projectInfo = results[1].status === 'fulfilled' ? results[1].value as ProjectInfo : null;
+
 
   if (
     !projectInfo ||
@@ -327,7 +348,7 @@ export async function getProjectConfig(
 
 
   const config: RawConfig = {
-    $schema: `https://${LIVE_HOST}/schema.json`,
+    $schema: `{LIVE_HOST}/schema.json`,
     rsc: projectInfo.isRSC,
     tsx: projectInfo.isTsx,
     style: "new-york",
@@ -348,7 +369,7 @@ export async function getProjectConfig(
     },
   }
 
-  return await resolveConfig(config ,cwd)
+  return await resolveConfigPaths(config ,cwd)
 }
 
 export async function getProjectTailwindVersionFromConfig(config: Config) : Promise<TailwindVersion> {

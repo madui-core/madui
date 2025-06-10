@@ -10,7 +10,7 @@ import { z } from 'zod';
 import { execa } from 'execa';
 import fs from 'fs';
 import os from 'os';
-import { getPackageManager } from './get-project-manager';
+import { getPackageManager } from './get-package-manager';
 
 
 const AUTHOR_REPO = process.env.AUTHOR_REPO || 'https://github.com/madui-core/madui/issues'
@@ -194,7 +194,7 @@ export async function createProject(
   //   process.exit(1);
   // }
 
-  const projectPath = `${options.cwd}/${projectName}`
+  const projectPath = path.resolve(options.cwd, projectName);
 
   // chekcing for the write permissions and if the directory exist or not
   try {

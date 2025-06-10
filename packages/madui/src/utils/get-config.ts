@@ -76,12 +76,12 @@ export async function getConfig(cwd: string): Promise<Config | null> {
     config.iconLibrary = config.style === 'new-tork' ? 'radix' : 'lucide'
   }
 
-  return await resolveConfig(config, cwd)
+  return await resolveConfigPaths(config, cwd)
 }
 
 
-export async function resolveConfig(config: RawConfig, cwd: string): Promise<Config> {
-  const tsConfig = await loadConfig(cwd) // TODO: we could try setting default tsconfig path
+export async function resolveConfigPaths(config: RawConfig, cwd: string): Promise<Config> {
+  const tsConfig = loadConfig(cwd) // TODO: we could try setting default tsconfig path
   
   if(tsConfig.resultType === "failed") {
     throw new Error(
@@ -134,13 +134,14 @@ export async function getRawConfig(cwd: string): Promise<RawConfig | null> {
 // Note: checking for -workspace.yaml or "workspace" in package.json.
 // Since cwd is not necessarily the root of the project.
 // We'll instead check if ui aliases resolve to a different root.
+
 export async function getWorkspaceConfig(config: Config): Promise<Record<string, Config> | null> {
   let resolvedAliases:  any = {}
 
   Object.keys(config.aliases).forEach(async (key) => {
     if (
       !(Object.keys(config.resolvedPaths)
-      .filter((key) => key !== 'utils')
+      .filter((k) => k !== 'utils')
       .includes(key))
     ) {
       return;

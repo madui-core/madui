@@ -174,6 +174,5 @@ export async function preFlightInit(options: z.infer<typeof initOptionsSchema>) 
     errors,
     projectInfo,
   }
-
   
 }

@@ -1,20 +1,33 @@
 import path from 'path'
-import { promises } from 'fs'
+import fs from 'fs'
 import isUrl from '@/utils/isUrl'
+import { getProjectConfig, getProjectInfo, getProjectTailwindVersionFromConfig } from '@/utils/get-project-info'
 import { createProject, TEMPLATES } from '@/utils/create-project'
+import {
+  type Config,
+  DEFAULT_COMPONENTS,
+  DEFAULT_TAILWIND_CONFIG,
+  DEFAULT_TAILWIND_CSS,
+  DEFAULT_UTILS,
+  getConfig,
+  rawConfigSchema,
+  resolveConfigPaths
+} from '@/utils/get-config'
+import { addComponents } from '@/utils/add-components'
+import { preFlightInit } from '@/preflights/preflight-init'
+import { BASE_COLORS, getRegistryBaseColors, getRegistryItem, getRegistryStyles } from '@/registry/api'
 import * as ERRORS from '@/utils/errors'
-import { BASE_COLORS, getRegistryItem } from '@/registry/api'
 import { logger } from '@/utils/logger'
 import { setVerbose } from '@/verbose/config'
 import { highlighter } from '@/utils/highlighter'
 import { handleError } from '@/utils/handle-error'
 import { Verbose } from '@/verbose/logger'
+import { spinner } from '@/utils/spinner'
 import { Command } from 'commander'
 import { z } from 'zod'
-import { getProjectInfo } from '@/utils/get-project-info'
-import { getConfig } from '@/utils/get-config'
-import { preFlightInit } from '@/preflights/preflight-init'
+import prompts from 'prompts'
 
+const LIVE_HOST = process.env.MADUI_HOST || "http://localhost:3000"
 
 export const initOptionsSchema = z.object({
   components: z.array(z.string()).optional(),
@@ -125,7 +138,7 @@ async function runInit(
   }) {
   
   let projectInfo
-  let newProjectTemplate
+  let newProjectTemplate = null
 
   if(!options.skipPreFlight) {
     const preflight = await preFlightInit(options)
@@ -154,9 +167,230 @@ async function runInit(
   // }
 
 
+  const componentsConfig = await getProjectConfig(options.cwd, projectInfo)
+  const config = componentsConfig ?
+    await promptsForMinimalConfig(componentsConfig, options) :
+    await promptsForConfig(await getConfig(options.cwd))
 
+  if(!options.yes) {
+    const { confirm } = await prompts({
+      type: 'confirm',
+      name: 'confirm',
+      message: `Writing Config to ${highlighter.info('components.json')}. Continue?`,
+      initial: true,
+    })
+    if(!confirm) {
+      process.exit(0)
+    }
+  }
 
+  // Writing Components.json
+  const componentsSpinner = spinner(`creating ${highlighter.info('components.json')}...`).start()
+  fs.writeFileSync(path.resolve(options.cwd, "components.json"), JSON.stringify(config, null, 2), "utf-8")
+  componentsSpinner.succeed(`Created ${highlighter.info('components.json')} at ${highlighter.info(options.cwd)}`)
 
+  //adding components
+  const fullConfig = await resolveConfigPaths(config, options.cwd)
+  const components = [
+    ...(options.style === "none" ? [] : [options.style]),
+    ...(options.components ?? []),
+  ]
+
+  await addComponents(
+    components,
+    fullConfig,
+    {
+      overwrite: true,
+      silent: options.silent,
+      style: options.style,
+      isNewProject: options.isNewProject || projectInfo?.framework.name === 'next-app',
+    })
+
+  // If a new project is using src dir, let's update the tailwind content config.
+  // TODO: Handle this per framework.
+  if (options.isNewProject && options.srcDir) {
+    await updateTailwindContent(
+      ["./src/**/*.{js,ts,jsx,tsx,mdx}"],
+      fullConfig,
+      {
+        silent: options.silent,
+      }
+    )
+  }
   
-  return null
+  return fullConfig
+}
+
+export async function promptsForConfig(componenetsConfig: Config | null = null) {
+  const [styles, baseColor] = await Promise.all([
+    getRegistryStyles(),
+    getRegistryBaseColors()
+  ])
+
+  const options = await prompts([
+    {
+      type: 'toggle',
+      name: 'typescript',
+      message: `Would you like to use ${highlighter.info(
+        "TypeScript"
+      )} (recommended)?`,
+      initial: true,
+      active: 'yes',
+      inactive: 'no',
+    },
+    {
+      type: 'select',
+      name: 'style',
+      message: `Which ${highlighter.info('style')} do you want to use?`,
+      choices: Array.isArray(styles) ? styles.map((style) => ({
+        title: style.name === 'new-york' ? 'New-York (recommended)' : style.label,
+        value: style.name,
+      })) : [],
+      initial: 0,
+    },
+    {
+      type: 'select',
+      name: 'tailwindBaseColor',
+      message: `Which ${highlighter.info('base color')} do you want to use?`,
+      choices: baseColor.map((color) => ({
+        title: color.label, 
+        value: color.name,
+      })),
+      initial: 0
+    },
+    {
+      type: "text",
+      name: "tailwindCss",
+      message: `Where is your ${highlighter.info("global CSS")} file?`,
+      initial: componenetsConfig?.tailwind.css ?? DEFAULT_TAILWIND_CSS,
+    },
+    {
+      type: 'toggle',
+      name: 'tailwindcssVariables',
+      message: `Would you like to use ${highlighter.info("CSS variables")} for theming?`,
+      initial: true,
+      active: 'yes',
+      inactive: "no",  
+    },
+    {
+      type: 'text',
+      name: 'tailwindPrefix',
+      message: `Do you want to use a custom ${highlighter.info('tailwnind prefix eg., tw-')}? (leave empty for default)`,
+      initial: '',
+      validate: (value) => {
+        if (value && !/^[a-zA-Z0-9-]+$/.test(value)) {
+          return 'Prefix can only contain alphanumeric characters and hyphens.'
+        }
+        return true
+      },
+    },
+    {
+      type: "text",
+      name: "tailwindConfigPath",
+      message: `Write the custom path to your ${highlighter.info('tailwind.config.js')} file.`,
+      initial: componenetsConfig?.tailwind?.config ?? DEFAULT_TAILWIND_CONFIG,
+    },
+    {
+      type: 'text',
+      name: 'components',
+      message:`Configure the import alias for ${highlighter.info('components')}:`,
+      initial: componenetsConfig?.aliases?.components ?? DEFAULT_COMPONENTS,
+    },
+    {
+      type: 'text',
+      name: 'utils',
+      message: `Configure the import alias for ${highlighter.info('utils')}:`,
+      initial: componenetsConfig?.aliases?.utils ?? DEFAULT_UTILS,
+    },
+    {
+      type: 'toggle',
+      name: 'rsc',
+      message: `Would you like to use ${highlighter.info("React Server Components")} (RSC)?`,
+      initial: componenetsConfig?.rsc ?? true,
+      active: 'yes',
+      inactive: 'no',
+    }
+  ])
+
+
+  return rawConfigSchema.parse({
+    $schema: `${LIVE_HOST}/schema.json`,
+    style: options.style,
+    tailwind: {
+      config: options.tailwindConfigPath,
+      css: options.tailwindCss,
+      baseColor: options.tailwindBaseColor,
+      cssVariables: options.tailwindcssVariables,
+      prefix: options.tailwindPrefix,
+    },
+    rsc: options.rsc,
+    tsx: options.typescript,
+    aliases: {
+      utils: options.utils,
+      Components: options.components,
+      /**  @TODO fis this*/
+      lib: options.components.replace(/\/components$/, "lib"),
+      hooks: options.components.replace(/\/components$/, "hooks"),
+    },
+  })
+}
+
+
+export async function promptsForMinimalConfig(
+  componentsConfig: Config,
+  options: z.infer<typeof initOptionsSchema>
+) {
+  let style = componentsConfig.style
+  let baseColor = options.baseColor
+  let cssVariables = componentsConfig.tailwind.cssVariables
+
+  if (!options.defaults) {
+    const [styles, baseColors, tailwindVersion] = await Promise.all([
+      getRegistryStyles(),
+      getRegistryBaseColors(),
+      getProjectTailwindVersionFromConfig(componentsConfig)
+    ])
+
+    const prompt = await prompts([
+      {
+        type: tailwindVersion === 'v4' ? null : 'select',
+        name: 'style',
+        message: `which ${highlighter.info('style')} do you want to use?`,
+        choices: Array.isArray(styles) ? styles.map((style) => ({
+          title: style.name === 'new-york' ? 'New-York (recommended)' : style.label,
+          value: style.name,
+        })) : [],
+        initial: 0,
+      },
+      {
+        type: options.baseColor ? 'select' : null,
+        name: 'tailwindBaseColor',
+        message: `which ${highlighter.info('base color')} do you want to use?`,
+        choices: baseColors.map((color) => ({
+          title: color.label,
+          value: color.name,
+        })),
+        initial: 0,
+      },
+    ])
+    
+
+    style = prompt.style ?? style
+    baseColor = prompt.tailwindBaseColor ?? baseColor
+    cssVariables = options.cssVariables
+  }
+
+  return rawConfigSchema.parse({
+    $schema: componentsConfig.$schema,
+    style,
+    tailwind: {
+      ...componentsConfig?.tailwind,
+      baseColor,
+      cssVariables,
+    },
+    rsc: componentsConfig?.rsc,
+    tsx: componentsConfig?.tsx,
+    aliases: componentsConfig?.aliases,
+    iconLibrary: componentsConfig?.iconLibrary,
+  })
 }
