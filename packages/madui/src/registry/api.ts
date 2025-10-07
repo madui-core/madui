@@ -8,10 +8,15 @@ import { Verbose } from '@/verbose/logger'
 import {
   registryItemSchema,
   registryIndexSchema,
-  stylesSchema
+  registryBaseColorSchema,
+  stylesSchema,
 } from './schema'
 import axios from 'axios'
 import { z } from 'zod'
+import { getProjectTailwindVersionFromConfig } from '@/utils/get-project-info'
+import { buildTailwindThemeColorsFromCssVars } from '@/utils/updaters/update-tailwind-config'
+import { registryResolvedItemsTreeSchema, iconsSchema } from './schema'
+import deepmerge from 'deepmerge'
 
 const REGISTRY_URL = process.env.REGISTRY_URL ?? 'http://localhost:3000/r'
 
@@ -60,14 +65,21 @@ function getRegistryUrl(path: string) {
 }
 
 export async function getRegistryIndex() {
-  try {
+  // try {
     const res = await fetchRegistry(['index.json'])
+    console.log('res', res)
 
-    return registryIndexSchema.parse(res)
-  } catch (error) {
-    handleError(error)
-    return null
-  }
+
+    if (!res) {
+      return null
+    }
+
+
+    return registryIndexSchema.parse(res[0])
+  // } catch (error) {
+  //   handleError(error)
+  //   return null
+  // }
 } 
 
 export async function getRegistryStyles() {
@@ -115,18 +127,99 @@ export async function getRegistryBaseColors() {
   return BASE_COLORS
 }
 
-// export async function getRegistryBaseColor(baseColor: string) {
-//   try {
-//     const [result] = await fetchRegistry([`colors/${baseColor}.json`])
-//     return registryBaseColorSchema.parse(result)
-//   } catch (error) {
-//     handleError(error)
-//     return null
-//   }
-// }
+export async function getRegistryBaseColor(baseColor: string) {
+  try {
+    const result = await fetchRegistry([`colors/${baseColor}.json`])
+    return registryBaseColorSchema.parse(result)
+  } catch (error) {
+    handleError(error)
+    return null
+  }
+}
+
+
+export async function registryGetTheme(name: string, config: Config) {
+  /**
+   * --GET tailwind version without an fetch request from the root
+   */
+  
+  const [ baseColor, tailwindVersion ] = await Promise.all([
+    getRegistryBaseColor(name),
+    getProjectTailwindVersionFromConfig(config),
+  ])
+  if (!baseColor) {
+    return null
+  }
+
+  // SO SOME TODO: Move this to registry:theme
+  const theme = {
+    name,
+    type: "registry:theme",
+    tailwind: {
+      config: {
+        theme: {
+          extend: {
+            borderRadius: {
+              lg: "var(--radius)",
+              md: "calc(var(--radius) - 2px)",
+              sm: "calc(var(--radius) - 4px)",
+            },
+            colors: {},
+          },
+        },
+      },
+    },
+    cssVars: {
+      theme: {},
+      light: {
+        radius: "0.5rem",
+      },
+      dark: {},
+    },
+  } satisfies z.infer<typeof registryItemSchema>
+
+  if (config.tailwind.cssVariables) {
+    theme.tailwind.config.theme.extend.colors = {
+      ...theme.tailwind.config.theme.extend.colors,
+      ...buildTailwindThemeColorsFromCssVars(baseColor.cssVars.dark ?? {}),
+    }
+    theme.cssVars = {
+      theme: {
+        ...baseColor.cssVars.theme,
+        ...theme.cssVars.theme,
+      },
+      light: {
+        ...baseColor.cssVars.light,
+        ...theme.cssVars.light,
+      },
+      dark: {
+        ...baseColor.cssVars.dark,
+        ...theme.cssVars.dark,
+      },
+    }
+
+    if (tailwindVersion === 'v4' && baseColor.cssVarsV4) {
+      theme.cssVars.theme = {
+       theme: {
+          ...baseColor.cssVarsV4.theme,
+          ...theme.cssVars.theme,
+        },
+        light: {
+          radius: "0.625rem",
+          ...baseColor.cssVarsV4.light,
+        },
+        dark: {
+          ...baseColor.cssVarsV4.dark,
+        }, 
+      }
+    }
+  }
+  
+  return theme
+}
 
 export async function fetchRegistry(paths: string[], flexFetch = false) {
-  try {
+  // try {
     const res = await Promise.all(
       paths.map( async (path) => {
         const url = getRegistryUrl(path)
@@ -145,7 +238,7 @@ export async function fetchRegistry(paths: string[], flexFetch = false) {
         Verbose(`Fetching registry item from ${highlighter.info(url)}`)
         /**
          * TODO: for backend, currently using NextJS
-         * we are planning to move to node.js 
+         * planning to move to node.js 
          */
         const fetch = (async () => {
           const response = await axios.get(url, {
@@ -203,6 +296,7 @@ export async function fetchRegistry(paths: string[], flexFetch = false) {
               flexFlex: flexFetch
             })
           Verbose(`Fetched registry item ${highlighter.info(data.name)}`)
+
           return data
         })
 
@@ -217,10 +311,12 @@ export async function fetchRegistry(paths: string[], flexFetch = false) {
     }
 
     return res
-  } catch (error) {
-    logger.break()
-    handleError(error)
-  }
+  // } catch (error) {
+  //   logger.break()
+  //   console.log('here i am')
+  //   handleError(error)
+  //   return []
+  // }
 }
 
 export async function resovleRegistryDependencis(
@@ -264,6 +360,7 @@ export async function resovleRegistryDependencis(
   }
 
   await resolveDependencies(Url)
+  logger.info('resolved dependencies - ', Array.from(new Set(dependencies)))
   return Array.from(new Set(dependencies))
 }
 
@@ -273,7 +370,7 @@ export async function resolveRegistryItems(
   config: Config
 ) {
   let registryDependencies: string[] = []
-  for (const componenet of components) {
+  for (const componenet of components) { 
     if (dependenciesCache.has(componenet)) {
       registryDependencies.push(...dependenciesCache.get(componenet)!)
       continue
@@ -285,6 +382,7 @@ export async function resolveRegistryItems(
 
   return Array.from(new Set(registryDependencies))
 }
+
 
 export async function registryResolveItemsTree(
   components: z.infer<typeof registryItemSchema>["name"][],
@@ -298,6 +396,7 @@ export async function registryResolveItemsTree(
 
     // if we are resolving index, it should be in the starting of the index
     if (components.includes('index')) {
+      logger.info('We found index - Great! what next?')
       components.unshift('index')
     }
 
@@ -327,9 +426,88 @@ export async function registryResolveItemsTree(
      * 3. return the registry tree
      */
 
+    // Sort the payload so that registry:theme is always first.
+    payload.sort((a, b) => {
+      if (a.type === "registry:theme") {
+        return -1
+      }
+      return 1
+    })
 
+    let tailwind = {}
+    payload.forEach((item) => {
+      tailwind = deepmerge(tailwind, item.tailwind ?? {})
+    })
+
+    let cssVars = {}
+    payload.forEach((item) => {
+      cssVars = deepmerge(cssVars, item.cssVars ?? {})
+    })
+
+    let css = {}
+    payload.forEach((item) => {
+      css = deepmerge(css, item.css ?? {})
+    })
+
+    let docs = ""
+    payload.forEach((item) => {
+      if (item.docs) {
+        docs += `${item.docs}\n`
+      }
+    })
+
+    return registryResolvedItemsTreeSchema.parse({
+      dependencies: deepmerge.all(
+        payload.map((item) => item.dependencies ?? [])
+      ),
+      devDependencies: deepmerge.all(
+        payload.map((item) => item.devDependencies ?? [])
+      ),
+      files: deepmerge.all(payload.map((item) => item.files ?? [])),
+      tailwind,
+      cssVars,
+      css,
+      docs,
+    })
   } catch (error) {
     handleError(error)
     return null
   }
 } 
+
+export async function getRegistryIcons() {
+  try {
+    const [result] = await fetchRegistry(["icons/index.json"])
+    return iconsSchema.parse(result)
+  } catch (error) {
+    handleError(error)
+    return {}
+  }
+}
+
+// Track a dependency and its parent.
+export function getRegistryParentMap(
+  registryItems: z.infer<typeof registryItemSchema>[]
+) {
+  const map = new Map<string, z.infer<typeof registryItemSchema>>()
+  registryItems.forEach((item) => {
+    if (!item.registryDependencies) {
+      return
+    }
+
+    item.registryDependencies.forEach((dependency) => {
+      map.set(dependency, item)
+    })
+  })
+  return map
+}
+
+export function getRegistryTypeAliasMap() {
+  return new Map<string, string>([
+    ["registry:ui", "ui"],
+    ["registry:lib", "lib"],
+    ["registry:hook", "hooks"],
+    ["registry:block", "components"],
+    ["registry:component", "components"],
+  ])
+}

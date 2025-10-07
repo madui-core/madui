@@ -14,6 +14,7 @@ import {
   resolveConfigPaths
 } from '@/utils/get-config'
 import { addComponents } from '@/utils/add-components'
+import { updateTailwindContent } from '@/utils/updaters/update-tailwind-content'
 import { preFlightInit } from '@/preflights/preflight-init'
 import { BASE_COLORS, getRegistryBaseColors, getRegistryItem, getRegistryStyles } from '@/registry/api'
 import * as ERRORS from '@/utils/errors'
@@ -27,7 +28,7 @@ import { Command } from 'commander'
 import { z } from 'zod'
 import prompts from 'prompts'
 
-const LIVE_HOST = process.env.MADUI_HOST || "http://localhost:3000"
+const LIVE_HOST = process.env.MADUI_HOST || "http://localhost:3001"
 
 export const initOptionsSchema = z.object({
   components: z.array(z.string()).optional(),
@@ -86,9 +87,12 @@ export const init = new Command()
   .option('-y, --yes', 'Skip confirmatoin prompts', false)
   .option('-f, --force', 'Overwrite exisiting files', false)
   .option('-d, --defaults', 'Use default Configuration', false)
-  .option('-c, --cwd <cwd>', 'add the working directory, default to current working directory', process.cwd)
+  .option('-c, --cwd <cwd>',
+    'add the working directory, default to current working directory',
+    process.cwd()
+  )
   .option('-s, --silent', 'mute the output', false)
-  .option('-v, --verbose', 'output the full working', false)
+  .option('-V, --verbose', 'output the full working', false)
   .option(
     "--src-dir",
     "use the src directory when creating a new project.",
@@ -103,12 +107,14 @@ export const init = new Command()
   .action(async (components: any, opts: any) => {
     try {
       const options = initOptionsSchema.parse({
-        cwd: path.resolve(opts.cwd),
         isNewProject: false,
-        components,
         style: "index",
-        ...opts,
+        ...opts,  /** @fixed Place this before setting cwd to ensure the resolved cwd don't get overridden. */
+        cwd: path.resolve(opts.cwd),
+        components,
       })
+
+      console.log(path.resolve(options.cwd))
 
       setVerbose(options.verbose)
 
@@ -132,13 +138,13 @@ export const init = new Command()
     }
   })
 
-async function runInit(
+export async function runInit(
   options: z.infer<typeof initOptionsSchema> & {
     skipPreFlight?: boolean
   }) {
   
   let projectInfo
-  let newProjectTemplate = null
+  let newProjectTemplate
 
   if(!options.skipPreFlight) {
     const preflight = await preFlightInit(options)
@@ -191,6 +197,7 @@ async function runInit(
 
   //adding components
   const fullConfig = await resolveConfigPaths(config, options.cwd)
+  Verbose(`Resolved Config Paths`)
   const components = [
     ...(options.style === "none" ? [] : [options.style]),
     ...(options.components ?? []),
@@ -205,6 +212,8 @@ async function runInit(
       style: options.style,
       isNewProject: options.isNewProject || projectInfo?.framework.name === 'next-app',
     })
+
+  Verbose("Added components")
 
   // If a new project is using src dir, let's update the tailwind content config.
   // TODO: Handle this per framework.
@@ -227,6 +236,8 @@ export async function promptsForConfig(componenetsConfig: Config | null = null) 
     getRegistryBaseColors()
   ])
 
+  console.log(componenetsConfig)
+
   const options = await prompts([
     {
       type: 'toggle',
@@ -234,7 +245,7 @@ export async function promptsForConfig(componenetsConfig: Config | null = null) 
       message: `Would you like to use ${highlighter.info(
         "TypeScript"
       )} (recommended)?`,
-      initial: true,
+      initial: componenetsConfig?.tsx ?? true,
       active: 'yes',
       inactive: 'no',
     },
@@ -266,7 +277,7 @@ export async function promptsForConfig(componenetsConfig: Config | null = null) 
     },
     {
       type: 'toggle',
-      name: 'tailwindcssVariables',
+      name: 'tailwindCssVariables',
       message: `Would you like to use ${highlighter.info("CSS variables")} for theming?`,
       initial: true,
       active: 'yes',
@@ -276,7 +287,7 @@ export async function promptsForConfig(componenetsConfig: Config | null = null) 
       type: 'text',
       name: 'tailwindPrefix',
       message: `Do you want to use a custom ${highlighter.info('tailwnind prefix eg., tw-')}? (leave empty for default)`,
-      initial: '',
+      initial: "",
       validate: (value) => {
         if (value && !/^[a-zA-Z0-9-]+$/.test(value)) {
           return 'Prefix can only contain alphanumeric characters and hyphens.'
@@ -286,21 +297,21 @@ export async function promptsForConfig(componenetsConfig: Config | null = null) 
     },
     {
       type: "text",
-      name: "tailwindConfigPath",
+      name: "tailwindConfig",
       message: `Write the custom path to your ${highlighter.info('tailwind.config.js')} file.`,
-      initial: componenetsConfig?.tailwind?.config ?? DEFAULT_TAILWIND_CONFIG,
+      initial: componenetsConfig?.tailwind.config ?? DEFAULT_TAILWIND_CONFIG,
     },
     {
       type: 'text',
       name: 'components',
       message:`Configure the import alias for ${highlighter.info('components')}:`,
-      initial: componenetsConfig?.aliases?.components ?? DEFAULT_COMPONENTS,
+      initial: componenetsConfig?.aliases["components"] ?? DEFAULT_COMPONENTS,
     },
     {
       type: 'text',
       name: 'utils',
       message: `Configure the import alias for ${highlighter.info('utils')}:`,
-      initial: componenetsConfig?.aliases?.utils ?? DEFAULT_UTILS,
+      initial: componenetsConfig?.aliases["utils"] ?? DEFAULT_UTILS,
     },
     {
       type: 'toggle',
@@ -312,23 +323,22 @@ export async function promptsForConfig(componenetsConfig: Config | null = null) 
     }
   ])
 
-
   return rawConfigSchema.parse({
-    $schema: `${LIVE_HOST}/schema.json`,
+    $schema: "https://ui.shadcn.com/schema.json",
     style: options.style,
     tailwind: {
-      config: options.tailwindConfigPath,
+      config: options.tailwindConfig,
       css: options.tailwindCss,
       baseColor: options.tailwindBaseColor,
-      cssVariables: options.tailwindcssVariables,
+      cssVariables: options.tailwindCssVariables,
       prefix: options.tailwindPrefix,
     },
     rsc: options.rsc,
     tsx: options.typescript,
     aliases: {
       utils: options.utils,
-      Components: options.components,
-      /**  @TODO fis this*/
+      components: options.components,
+      // TODO: fix this.
       lib: options.components.replace(/\/components$/, "lib"),
       hooks: options.components.replace(/\/components$/, "hooks"),
     },

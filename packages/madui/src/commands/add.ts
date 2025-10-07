@@ -10,7 +10,7 @@ import { highlighter } from "@/utils/highlighter";
 import { logger } from "@/utils/logger"
 import { setVerbose } from "@/verbose/config";
 import { Verbose } from "@/verbose/logger";
-import { Command, option } from "commander";
+import { Command } from "commander";
 import prompts from "prompts";
 import { z } from "zod";
 import { handleError } from "@/utils/handle-error";
@@ -98,7 +98,7 @@ export const add = new Command()
     "[components...]",
     "components to add or a url to a madui component")
   .option("-y, --yes", "skip configuraion prompts", false)
-  .option("-o, --overwrite, -f, --force", "overwrite existing files", false)
+  .option("-o, --overwrite", "overwrite existing files", false)
   .option(
     "-c, --cwd <cwd>", 
     "the directory to add components to, default to current working directory",
@@ -200,59 +200,59 @@ export const add = new Command()
           process.exit(1)
         }
         
-        config = await runInit({
-          cwd: options.cwd,
-          yes: true,
-          force: true,
-          defaults: false,
-          skipPreflight: false,
-          silent: true,
-          isNewProject: false,
-          srcDir: options.srcDir,
-          cssVariables: options.cssVariables,
-          style: "index",
-        })
+        // config = await runInit({
+        //   cwd: options.cwd,
+        //   yes: true,
+        //   force: true,
+        //   defaults: false,
+        //   skipPreflight: false,
+        //   silent: true,
+        //   isNewProject: false,
+        //   srcDir: options.srcDir,
+        //   cssVariables: options.cssVariables,
+        //   style: "index",
+        // })
 
-        let shouldUpdateAppIndex = false
+        // let shouldUpdateAppIndex = false
 
-        if (errors.MISSING_DIR_OR_EMPTY_PROJECT) {
-          const { projectPath, template } = await createProject({
-            cwd: options.cwd,
-            force: options.force,
-            srcDir: options.srcDir,
-            components: options.components,
-          })
+        // if (errors.MISSING_DIR_OR_EMPTY_PROJECT) {
+        //   const { projectPath, template } = await createProject({
+        //     cwd: options.cwd,
+        //     force: options.force,
+        //     srcDir: options.srcDir,
+        //     components: options.components,
+        //   })
 
-          if(!projectPath) {
-            logger.break()
-            logger.error("Project path not found.")
-            process.exit(1)
-          }
+        //   if(!projectPath) {
+        //     logger.break()
+        //     logger.error("Project path not found.")
+        //     process.exit(1)
+        //   }
 
-          options.cwd = projectPath
-          if (template === "next-monorepo") {
-            options.cwd = path.resolve(options.cwd, "apps/web")
-            config = await getConfig(options.cwd)
-          }
-          else {
-            config = await runInit({
-              cwd: options.cwd,
-              yes: true,
-              force: true,
-              defaults: false,
-              skipPreflight: true,
-              silent: true,
-              isNewProject: true,
-              srcDir: options.srcDir,
-              cssVariables: options.cssVariables,
-              style: "index",
-            })
+        //   options.cwd = projectPath
+        //   if (template === "next-monorepo") {
+        //     options.cwd = path.resolve(options.cwd, "apps/web")
+        //     config = await getConfig(options.cwd)
+        //   }
+        //   else {
+        //     config = await runInit({
+        //       cwd: options.cwd,
+        //       yes: true,
+        //       force: true,
+        //       defaults: false,
+        //       skipPreflight: true,
+        //       silent: true,
+        //       isNewProject: true,
+        //       srcDir: options.srcDir,
+        //       cssVariables: options.cssVariables,
+        //       style: "index",
+        //     })
 
-            shouldUpdateAppIndex =
-              options.components?.length === 1 &&
-              !!options.components[0].match(/\/chat\/b\//)
-            }
-        }
+        //     shouldUpdateAppIndex =
+        //       options.components?.length === 1 &&
+        //       !!options.components[0].match(/\/chat\/b\//)
+        //     }
+        // }
 
         if (!config) {
         throw new Error(

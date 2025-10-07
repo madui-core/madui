@@ -3,6 +3,6 @@ import { logger } from '@/utils/logger'
 
 export const Verbose = (...args: string[]) => {
   if (isVerbose()) {
-    logger.verbose(`VERBOSE: ${args.join(' ')}`)
+    logger.verbose(`\nVERBOSE: ${args.join(' ')}`)
   }
 }

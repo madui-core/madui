@@ -95,21 +95,57 @@ export async function resolveConfigPaths(config: RawConfig, cwd: string): Promis
   const componentResolvePath = await resolveImport(config.aliases["components"], tsConfig)
   const libResolvePath = config.aliases["lib"] && await resolveImport(config.aliases["lib"], tsConfig)
   const hooksResolvePath = config.aliases["hooks"] && await resolveImport(config.aliases["hooks"], tsConfig)
+
+  // console.log(
+  //   {
+  //     tailwindConfig: config.tailwind.config ? path.resolve(cwd, config.tailwind.config) : "", // TODO: we could try setting default tailwind path
+  //     tailwindCss: path.resolve(cwd, config.tailwind.css) || DEFAULT_TAILWIND_CSS,
+  //     utils: utilsResolvePath,
+  //     ui: config.aliases["ui"] ? componentResolvePath : path.resolve((componentResolvePath) ?? cwd, "ui"), 
+  //     // TODO: Make this configurable.
+  //     // TODO: Make this configurable.
+  //     lib: config.aliases['lib'] ? libResolvePath : path.resolve((libResolvePath) ?? cwd, ".."),
+  //     hooks: config.aliases['hooks'] ? hooksResolvePath : path.resolve((hooksResolvePath) ?? cwd, "..")
+  //   }
+
+  // )
+ 
+
   
   return configSchema.parse({
     ...config,
-    resolvePaths: {
+    resolvedPaths: {
       cwd,
-      tailwindConfig: config.tailwind.config ? path.resolve(cwd, config.tailwind.config) : '', // TODO: we could try setting default tailwind path
-      tailwindCss: path.resolve(cwd, config.tailwind.css) || DEFAULT_TAILWIND_CSS,
-      utils: utilsResolvePath,
-      components: componentResolvePath,
-      ui: config.aliases["ui"] ? componentResolvePath : path.resolve((componentResolvePath) ?? cwd, "ui"), 
+      tailwindConfig: config.tailwind.config
+        ? path.resolve(cwd, config.tailwind.config)
+        : "",
+      tailwindCss: path.resolve(cwd, config.tailwind.css),
+      utils: await resolveImport(config.aliases["utils"], tsConfig),
+      components: await resolveImport(config.aliases["components"], tsConfig),
+      ui: config.aliases["ui"]
+        ? await resolveImport(config.aliases["ui"], tsConfig)
+        : path.resolve(
+            (await resolveImport(config.aliases["components"], tsConfig)) ??
+              cwd,
+            "ui"
+          ),
       // TODO: Make this configurable.
-      // For now, the lib and hooks directories are one level up from the components directory. (credit: @sadcn)
-      lib: config.aliases['lib'] ? libResolvePath : path.resolve((libResolvePath) ?? cwd, ".."),
-      hooks: config.aliases['hooks'] ? hooksResolvePath : path.resolve((hooksResolvePath) ?? cwd, "..")
-    }
+      // For now, we assume the lib and hooks directories are one level up from the components directory.
+      lib: config.aliases["lib"]
+        ? await resolveImport(config.aliases["lib"], tsConfig)
+        : path.resolve(
+            (await resolveImport(config.aliases["utils"], tsConfig)) ?? cwd,
+            ".."
+          ),
+      hooks: config.aliases["hooks"]
+        ? await resolveImport(config.aliases["hooks"], tsConfig)
+        : path.resolve(
+            (await resolveImport(config.aliases["components"], tsConfig)) ??
+              cwd,
+            "..",
+            "hooks"
+          ),
+    },
   })
 }
 

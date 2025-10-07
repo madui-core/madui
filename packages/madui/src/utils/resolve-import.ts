@@ -6,6 +6,6 @@ export async function resolveImport(importPath: string, tsConfig: Pick<ConfigLoa
     importPath,
     undefined,
     () => true,
-    ['.ts', '.tsx']
+    ['.ts', '.tsx', ".jsx", ".js", ".css"]
   ) 
 }

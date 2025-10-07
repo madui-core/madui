@@ -7,17 +7,22 @@
     "name": "madui",
     "url": "https://twitter.com/madui"
   },
-  "packageManager": "bun@1.2.13",
+  "packageManager": "pnpm@9.6.0",
   "workspaces": [
     "apps/*",
     "packages/*"
   ],
   "scripts": {
+    "start:dev": "turbo run dev --parallel",
+
     "build": "turbo run build",
-    "build:cli": "turbo --filter=madmen build",
+    "build:cli": "turbo --filter=madui build",
     "dev": "turbo run dev --parallel",
-    "cli:build": "bun --filter=cli build",
-    "cli:dev": "bun --filter=cli dev",
+    "cli:build": "pnpm --filter=madui build",
+    "cli:dev": "pnpm --filter=madui dev",
+
+    "madui:dev": "turbo --filter=madui dev",
+    "madui": "pnpm --filter=madui start:dev",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",

@@ -158,8 +158,7 @@ export async function createProject(
       {
         type: options.template || isRemoteComponent ? null : "select",
         name: "type",
-        message: `It's look like path ${highlighter.info(options.cwd)} does not contain package.json.\n
-        Create a new project?`,
+        message: `It's look like path ${highlighter.info(options.cwd)} does not contain package.json.\n  Create a new project?`,
         choices: [
           {title: "NextJS", value: "next"},
         ],
@@ -175,7 +174,7 @@ export async function createProject(
     ])
 
     template = type ?? template
-    projectName = name || projectName
+    projectName = name
   }
 
   // check if path is writable
@@ -193,6 +192,11 @@ export async function createProject(
   //   logger.break();
   //   process.exit(1);
   // }
+
+  
+  const packageManager = await getPackageManager(options.cwd, {
+    withFallBack: true,
+  })
 
   const projectPath = path.resolve(options.cwd, projectName);
 
@@ -231,18 +235,12 @@ export async function createProject(
 
   // checkDirectory(cwd, projectName)
 
-  
-  const packageManager = await getPackageManager(options.cwd, {
-    withFallBack: true,
-  })
-
-
   if (template === TEMPLATES.next) {
     await createNextProject(projectPath, {
       version: nextVersion,
       cwd: options.cwd,
       packageManager,
-      srcDir: options.srcDir,
+      srcDir: !!options.srcDir,
     })
   }
 
@@ -295,10 +293,10 @@ export async function createNextProject(
   try {
     await execa(
       "npx",
-      [`create-next-app@${options.version}`, projectPath, '--silent' ,...args],
+      [`create-next-app@${options.version}`, projectPath, ...args],
       {
         cwd: options.cwd,
-        stdio: "inherit",
+        // stdio: "inherit",
       }
     )
   } catch (error: any) {
@@ -306,5 +304,5 @@ export async function createNextProject(
     process.exit(1);
   }
 
-  createSpinner?.succeed("Creating a new Next.js project.")
+  createSpinner?.succeed("Created a new Next.js project.")
 }

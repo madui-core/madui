@@ -37,7 +37,7 @@ export const registryItemFileSchema = z.discriminatedUnion('type', [
 ])
 
 export const registryItemTailwindSchema = z.object({
-  consfig: z.object({
+  config: z.object({
     content: z.array(z.string()).optional(),
     theme: z.record(z.string(), z.any()).optional(),
     plugins: z.array(z.string()).optional(),
@@ -65,12 +65,12 @@ export const registryItemCssSchema = z.record(
 )
 
 
+
 export const registryItemSchema = z.object({
   $schema: z.string().optional(),
   extends: z.string().optional(),
   name: z.string(),
   type: registryItemTypeSchema,
-  version: z.string().optional(),
   title: z.string().optional(),
   author: z.string().min(2).optional(),
   description: z.string().optional(),
@@ -82,6 +82,37 @@ export const registryItemSchema = z.object({
   cssVars: registryItemCssVarsSchema.optional(),
   css: registryItemCssSchema.optional(),
   meta: z.record(z.string(), z.any()).optional(),
+  docs: z.string().optional(),
+  categories: z.array(z.string()).optional(),
 })
 
+export type RegistryItem = z.infer<typeof registryItemSchema>
+
+
 export const registryIndexSchema = z.array(registryItemSchema)
+
+export const registryBaseColorSchema = z.object({
+  inlineColors: z.object({
+    light: z.record(z.string(), z.string()),
+    dark: z.record(z.string(), z.string()),
+  }),
+  cssVars: registryItemCssVarsSchema,
+  cssVarsV4: registryItemCssVarsSchema.optional(),
+  inlineColorsTemplate: z.string(),
+  cssTemplate: z.string(),
+})
+
+export const registryResolvedItemsTreeSchema = registryItemSchema.pick({
+  dependencies: true,
+  devDependencies: true,
+  files: true,
+  tailwind: true,
+  cssVars: true,
+  css: true,
+  docs: true,
+})
+
+export const iconsSchema = z.record(
+  z.string(),
+  z.record(z.string(), z.string())
+)

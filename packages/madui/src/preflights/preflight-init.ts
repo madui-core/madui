@@ -36,6 +36,7 @@ export async function preFlightInit(options: z.infer<typeof initOptionsSchema>) 
   Verbose('checking projects existence & package.json...')
   // Ensure target directory exists.
   // Check for empty project. We assume if no package.json exists, the project is empty.
+  console.log("---> ", options.cwd)
   if (
     !fs.existsSync(options.cwd) ||
     !fs.existsSync(path.resolve(options.cwd, "package.json"))
@@ -80,7 +81,8 @@ export async function preFlightInit(options: z.infer<typeof initOptionsSchema>) 
   
   Verbose('getting project info...')
   const projectInfo = await getProjectInfo(options.cwd)
-  if(!projectInfo || projectInfo.framework.name === 'manual') {
+
+  if(!projectInfo || projectInfo?.framework.name === 'manual') {
     errors[ERRORS.MISSING_FRAMEWORK] = true
     frameworkSpinner.fail(
       `No supported framework found!`

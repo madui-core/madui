@@ -1,0 +1,32 @@
+{
+  "inherit": "inherit",
+  "current": "currentColor",
+  "transparent": "transparent",
+  "black": {
+    "hex": "#000000",
+    "rgb": "rgb(0,0,0)",
+    "hsl": "hsl(0,0%,0%)",
+    "oklch": "oklch(0.00,0.00,0)",
+    "rgbChannel": "0 0 0",
+    "hslChannel": "0 0% 0%"
+  },
+  "white": {
+    "hex": "#ffffff",
+    "rgb": "rgb(255,255,255)",
+    "hsl": "hsl(0,0%,100%)",
+    "oklch": "oklch(1.00,0.00,0)",
+    "rgbChannel": "255 255 255",
+    "hslChannel": "0 0% 100%"
+  },
+  "slate": [
+    {
+      "scale": 50,
+      "hex": "#f8fafc",
+      "rgb": "rgb(248,250,252)",
+      "hsl": "hsl(210,40%,98%)",
+      "oklch": "oklch(0.98,0.00,248)",
+      "rgbChannel": "248 250 252",
+      "hslChannel": "210 40% 98%"
+    }
+  ]
+}
