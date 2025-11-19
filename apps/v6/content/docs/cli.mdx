@@ -1,0 +1,304 @@
+---
+title: CLI
+description: Use the MadUI CLI to add components to your project.
+---
+
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+
+## init
+
+Use the `init` command to initialize configuration and dependencies for a new project.
+
+The `init` command installs dependencies, adds the `cn` util and configures CSS variables for the project.
+
+<Tabs items={['npm', 'pnpm', 'yarn', 'bun']}>
+  <Tab value="npm">
+    ```bash
+    npx madui@latest init
+    ```
+  </Tab>
+  <Tab value="pnpm">
+    ```bash
+    pnpm dlx madui@latest init
+    ```
+  </Tab>
+  <Tab value="yarn">
+    ```bash
+    npx madui@latest init
+    ```
+  </Tab>
+  <Tab value="bun">
+    ```bash
+    bunx madui@latest init
+    ```
+  </Tab>
+</Tabs>
+
+### Options
+
+```txt
+Usage: madui init [options] [components...]
+
+initialize your project and install dependencies
+
+Arguments:
+  components         name, url or local path to component
+
+Options:
+  -b, --base-color <base-color>  the base color to use. (neutral, gray, zinc, stone, slate)
+  -y, --yes                      skip confirmation prompt. (default: true)
+  -f, --force                    force overwrite of existing configuration. (default: false)
+  -c, --cwd <cwd>                the working directory. defaults to the current directory.
+  -s, --silent                   mute output. (default: false)
+  --src-dir                      use the src directory when creating a new project. (default: false)
+  --no-src-dir                   do not use the src directory when creating a new project.
+  --css-variables                use css variables for theming. (default: true)
+  --no-css-variables             do not use css variables for theming.
+  -h, --help                     display help for command
+  -V, --Verbose                  To display verbose level
+```
+
+---
+
+## add
+
+Use the `add` command to add components and dependencies to your project.
+
+<Tabs items={['npm', 'pnpm', 'yarn', 'bun']}>
+  <Tab value="npm">
+    ```bash
+    npx madui@latest add [component]
+    ```
+  </Tab>
+  <Tab value="pnpm">
+    ```bash
+    pnpm dlx madui@latest add [component]
+    ```
+  </Tab>
+  <Tab value="yarn">
+    ```bash
+    npx madui@latest add [component]
+    ```
+  </Tab>
+  <Tab value="bun">
+    ```bash
+    bunx madui@latest add [component]
+    ```
+  </Tab>
+</Tabs>
+
+You will be presented with a list of components to choose from:
+
+```txt
+Which components would you like to add? › Space to select. A to toggle all.
+Enter to submit.
+
+◯  accordion
+◯  alert
+◯  avatar
+◯  badge
+◯  button
+◯  calendar
+◯  card
+◯  checkbox
+```
+
+### Options
+
+```txt
+Usage: madui add [options] [components...]
+
+add a component to your project
+
+Arguments:
+  components         name, url or local path to component
+
+Options:
+  -y, --yes           skip confirmation prompt. (default: false)
+  -o, --overwrite     overwrite existing files. (default: false)
+  -c, --cwd <cwd>     the working directory. defaults to the current directory.
+  -a, --all           add all available components (default: false)
+  -p, --path <path>   the path to add the component to.
+  -s, --silent        mute output. (default: false)
+  --src-dir           use the src directory when creating a new project. (default: false)
+  --no-src-dir        do not use the src directory when creating a new project.
+  --css-variables     use css variables for theming. (default: true)
+  --no-css-variables  do not use css variables for theming.
+  -h, --help          display help for command
+```
+
+### Examples
+
+Add a single component:
+
+<Tabs items={['npm', 'pnpm', 'yarn', 'bun']}>
+  <Tab value="npm">
+    ```bash
+    npx madui@latest add button
+    ```
+  </Tab>
+  <Tab value="pnpm">
+    ```bash
+    pnpm dlx madui@latest add button
+    ```
+  </Tab>
+  <Tab value="yarn">
+    ```bash
+    npx madui@latest add button
+    ```
+  </Tab>
+  <Tab value="bun">
+    ```bash
+    bunx madui@latest add button
+    ```
+  </Tab>
+</Tabs>
+
+Add multiple components:
+
+<Tabs items={['npm', 'pnpm', 'yarn', 'bun']}>
+  <Tab value="npm">
+    ```bash
+    npx madui@latest add button card alert
+    ```
+  </Tab>
+  <Tab value="pnpm">
+    ```bash
+    pnpm dlx madui@latest add button card alert
+    ```
+  </Tab>
+  <Tab value="yarn">
+    ```bash
+    npx madui@latest add button card alert
+    ```
+  </Tab>
+  <Tab value="bun">
+    ```bash
+    bunx madui@latest add button card alert
+    ```
+  </Tab>
+</Tabs>
+
+Add all components:
+
+<Tabs items={['npm', 'pnpm', 'yarn', 'bun']}>
+  <Tab value="npm">
+    ```bash
+    npx madui@latest add --all
+    ```
+  </Tab>
+  <Tab value="pnpm">
+    ```bash
+    pnpm dlx madui@latest add --all
+    ```
+  </Tab>
+  <Tab value="yarn">
+    ```bash
+    npx madui@latest add --all
+    ```
+  </Tab>
+  <Tab value="bun">
+    ```bash
+    bunx madui@latest add --all
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## diff
+
+Use the `diff` command to check for updates against the registry.
+
+The `diff` command will show you the differences between the local version of a component and the registry version.
+
+<Tabs items={['npm', 'pnpm', 'yarn', 'bun']}>
+  <Tab value="npm">
+    ```bash
+    npx madui@latest diff [component]
+    ```
+  </Tab>
+  <Tab value="pnpm">
+    ```bash
+    pnpm dlx madui@latest diff [component]
+    ```
+  </Tab>
+  <Tab value="yarn">
+    ```bash
+    npx madui@latest diff [component]
+    ```
+  </Tab>
+  <Tab value="bun">
+    ```bash
+    bunx madui@latest diff [component]
+    ```
+  </Tab>
+</Tabs>
+
+### Options
+
+```txt
+Usage: madui diff [options] [component]
+
+check for updates against the registry
+
+Arguments:
+  component        the component name
+
+Options:
+  -y, --yes        skip confirmation prompt. (default: false)
+  -c, --cwd <cwd>  the working directory. defaults to the current directory.
+  -h, --help       display help for command
+```
+
+### Examples
+
+Check for updates for a single component:
+
+<Tabs items={['npm', 'pnpm', 'yarn', 'bun']}>
+  <Tab value="npm">
+    ```bash
+    npx madui@latest diff button
+    ```
+  </Tab>
+  <Tab value="pnpm">
+    ```bash
+    pnpm dlx madui@latest diff button
+    ```
+  </Tab>
+  <Tab value="yarn">
+    ```bash
+    npx madui@latest diff button
+    ```
+  </Tab>
+  <Tab value="bun">
+    ```bash
+    bunx madui@latest diff button
+    ```
+  </Tab>
+</Tabs>
+
+Check for updates for all components:
+
+<Tabs items={['npm', 'pnpm', 'yarn', 'bun']}>
+  <Tab value="npm">
+    ```bash
+    npx madui@latest diff
+    ```
+  </Tab>
+  <Tab value="pnpm">
+    ```bash
+    pnpm dlx madui@latest diff
+    ```
+  </Tab>
+  <Tab value="yarn">
+    ```bash
+    npx madui@latest diff
+    ```
+  </Tab>
+  <Tab value="bun">
+    ```bash
+    bunx madui@latest diff
+    ```
+  </Tab>
+</Tabs>

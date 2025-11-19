@@ -1,0 +1,197 @@
+---
+title: Next.js
+description: Adding dark mode to your Next.js app.
+---
+
+import { Step, Steps } from 'fumadocs-ui/components/steps';
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+
+<Steps>
+
+<Step>
+
+## Install next-themes
+
+Start by installing `next-themes`:
+
+<Tabs items={['npm', 'pnpm', 'yarn', 'bun']}>
+  <Tab value="npm">
+    ```bash
+    npm install next-themes
+    ```
+  </Tab>
+  <Tab value="pnpm">
+    ```bash
+    pnpm add next-themes
+    ```
+  </Tab>
+  <Tab value="yarn">
+    ```bash
+    yarn add next-themes
+    ```
+  </Tab>
+  <Tab value="bun">
+    ```bash
+    bun add next-themes
+    ```
+  </Tab>
+</Tabs>
+
+</Step>
+
+<Step>
+
+## Create a theme provider
+
+Create a theme provider component:
+
+```tsx title="components/theme-provider.tsx" showLineNumbers
+"use client"
+
+import * as React from "react"
+import { ThemeProvider as NextThemesProvider } from "next-themes"
+
+export function ThemeProvider({
+  children,
+  ...props
+}: React.ComponentProps<typeof NextThemesProvider>) {
+  return <NextThemesProvider {...props}>{children}</NextThemesProvider>
+}
+```
+
+</Step>
+
+<Step>
+
+## Wrap your root layout
+
+Add the `ThemeProvider` to your root layout and add the `suppressHydrationWarning` prop to the `html` tag.
+
+```tsx title="app/layout.tsx" showLineNumbers {1,6,9-14,16}
+import { ThemeProvider } from "@/components/theme-provider"
+
+export default function RootLayout({ children }: RootLayoutProps) {
+  return (
+    <>
+      <html lang="en" suppressHydrationWarning>
+        <head />
+        <body>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            {children}
+          </ThemeProvider>
+        </body>
+      </html>
+    </>
+  )
+}
+```
+
+</Step>
+
+<Step>
+
+## Add a mode toggle
+
+Place a mode toggle on your site to toggle between light and dark mode.
+
+### Add the toggle component
+
+First, add the mode toggle component using the MadUI CLI:
+
+<Tabs items={['npm', 'pnpm', 'yarn', 'bun']}>
+  <Tab value="npm">
+    ```bash
+    npx madui@latest add mode-toggle
+    ```
+  </Tab>
+  <Tab value="pnpm">
+    ```bash
+    pnpm dlx madui@latest add mode-toggle
+    ```
+  </Tab>
+  <Tab value="yarn">
+    ```bash
+    npx madui@latest add mode-toggle
+    ```
+  </Tab>
+  <Tab value="bun">
+    ```bash
+    bunx madui@latest add mode-toggle
+    ```
+  </Tab>
+</Tabs>
+
+### Use the mode toggle
+
+You can now use the mode toggle component in your app:
+
+```tsx title="components/header.tsx"
+import { ModeToggle } from "@/components/mode-toggle"
+
+export function Header() {
+  return (
+    <header>
+      <nav>
+        {/* Your navigation items */}
+        <ModeToggle />
+      </nav>
+    </header>
+  )
+}
+```
+
+### Manual installation
+
+If you prefer to install the mode toggle manually, here's the code:
+
+```tsx title="components/mode-toggle.tsx" showLineNumbers
+"use client"
+
+import * as React from "react"
+import { Moon, Sun } from "lucide-react"
+import { useTheme } from "next-themes"
+
+import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+
+export function ModeToggle() {
+  const { setTheme } = useTheme()
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="icon">
+          <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+          <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+          <span className="sr-only">Toggle theme</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={() => setTheme("light")}>
+          Light
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme("dark")}>
+          Dark
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme("system")}>
+          System
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+```
+
+</Step>
+
+</Steps>

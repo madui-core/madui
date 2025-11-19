@@ -1,0 +1,14 @@
+{
+  "title": "Documentation",
+  "pages": [
+    "index",
+    "installation",
+    "components-json",
+    "cli",
+    "theming",
+    "dark-mode",
+    "registry",
+    "---",
+    "components"
+  ]
+}

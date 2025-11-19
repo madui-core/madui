@@ -1,0 +1,366 @@
+---
+title: Button
+description: Displays a button or a component that looks like a button.
+---
+
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+import { Step, Steps } from 'fumadocs-ui/components/steps';
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Mail, Loader2, ChevronRight, ArrowUpRight } from 'lucide-react';
+
+<Callout title="Updated" type="info">
+  We have updated the button component to add new sizes: `icon-sm` and `icon-lg`. See the [changelog](#changelog) for more details. Follow the instructions to update your project.
+</Callout>
+
+<div className="preview flex flex-wrap items-center gap-4 p-6 border rounded-lg mb-6">
+  <button type="button" className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
+    Button
+  </button>
+  <button type="button" className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 w-10" aria-label="Submit">
+    <ChevronRight className="h-4 w-4" />
+  </button>
+</div>
+
+```tsx showLineNumbers
+<Button variant="outline">Button</Button>
+<Button variant="outline" size="icon" aria-label="Submit">
+  <ArrowUpIcon />
+</Button>
+```
+
+## Installation
+
+<Tabs items={['CLI', 'Manual']}>
+  <Tab value="CLI">
+    ```bash
+    npx madui@latest add button
+    ```
+  </Tab>
+  <Tab value="Manual">
+    <Steps>
+      <Step>
+        ### Install dependencies
+
+        ```bash
+        npm install @radix-ui/react-slot
+        ```
+      </Step>
+      
+      <Step>
+        ### Copy and paste the component code
+
+        Copy and paste the following code into your project at `components/ui/button.tsx`:
+
+        ```tsx title="components/ui/button.tsx"
+        import * as React from "react"
+        import { Slot } from "@radix-ui/react-slot"
+        import { cva, type VariantProps } from "class-variance-authority"
+
+        import { cn } from "@/lib/utils"
+
+        const buttonVariants = cva(
+          "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+          {
+            variants: {
+              variant: {
+                default: "bg-primary text-primary-foreground hover:bg-primary/90",
+                destructive:
+                  "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+                outline:
+                  "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+                secondary:
+                  "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+                ghost: "hover:bg-accent hover:text-accent-foreground",
+                link: "text-primary underline-offset-4 hover:underline",
+              },
+              size: {
+                default: "h-10 px-4 py-2",
+                sm: "h-9 rounded-md px-3",
+                lg: "h-11 rounded-md px-8",
+                icon: "h-10 w-10",
+              },
+            },
+            defaultVariants: {
+              variant: "default",
+              size: "default",
+            },
+          }
+        )
+
+        export interface ButtonProps
+          extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+            VariantProps<typeof buttonVariants> {
+          asChild?: boolean
+        }
+
+        const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+          ({ className, variant, size, asChild = false, ...props }, ref) => {
+            const Comp = asChild ? Slot : "button"
+            return (
+              <Comp
+                className={cn(buttonVariants({ variant, size, className }))}
+                ref={ref}
+                {...props}
+              />
+            )
+          }
+        )
+        Button.displayName = "Button"
+
+        export { Button, buttonVariants }
+        ```
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+## Usage
+
+```tsx
+import { Button } from "@/components/ui/button"
+```
+
+```tsx
+<Button variant="outline">Button</Button>
+```
+
+## Examples
+
+### Size
+
+<div className="preview flex flex-wrap items-center gap-4 p-6 border rounded-lg mb-4">
+  <button type="button" className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3">
+    Small
+  </button>
+  <button type="button" className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8" aria-label="Submit">
+    <ArrowUpRight className="h-4 w-4" />
+  </button>
+  <button type="button" className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
+    Default
+  </button>
+  <button type="button" className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 w-10" aria-label="Submit">
+    <ArrowUpRight className="h-4 w-4" />
+  </button>
+  <button type="button" className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-11 px-8">
+    Large
+  </button>
+  <button type="button" className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-12 w-12" aria-label="Submit">
+    <ArrowUpRight className="h-4 w-4" />
+  </button>
+</div>
+
+```tsx showLineNumbers
+// Small
+<Button size="sm" variant="outline">Small</Button>
+<Button size="icon-sm" aria-label="Submit" variant="outline">
+  <ArrowUpRightIcon />
+</Button>
+
+// Medium (Default)
+<Button variant="outline">Default</Button>
+<Button size="icon" aria-label="Submit" variant="outline">
+  <ArrowUpRightIcon />
+</Button>
+
+// Large
+<Button size="lg" variant="outline">Large</Button>
+<Button size="icon-lg" aria-label="Submit" variant="outline">
+  <ArrowUpRightIcon />
+</Button>
+```
+
+### Default
+
+<div className="preview flex items-center gap-4 p-6 border rounded-lg mb-4">
+  <button type="button" className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
+    Button
+  </button>
+</div>
+
+```tsx
+<Button>Button</Button>
+```
+
+### Secondary
+
+<div className="preview flex items-center gap-4 p-6 border rounded-lg mb-4">
+  <button type="button" className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-secondary text-secondary-foreground hover:bg-secondary/80 h-10 px-4 py-2">
+    Secondary
+  </button>
+</div>
+
+```tsx
+<Button variant="secondary">Secondary</Button>
+```
+
+### Destructive
+
+<div className="preview flex items-center gap-4 p-6 border rounded-lg mb-4">
+  <button type="button" className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-destructive text-destructive-foreground hover:bg-destructive/90 h-10 px-4 py-2">
+    Destructive
+  </button>
+</div>
+
+```tsx
+<Button variant="destructive">Destructive</Button>
+```
+
+### Outline
+
+<div className="preview flex items-center gap-4 p-6 border rounded-lg mb-4">
+  <button type="button" className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
+    Outline
+  </button>
+</div>
+
+```tsx
+<Button variant="outline">Outline</Button>
+```
+
+### Ghost
+
+<div className="preview flex items-center gap-4 p-6 border rounded-lg mb-4">
+  <button type="button" className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
+    Ghost
+  </button>
+</div>
+
+```tsx
+<Button variant="ghost">Ghost</Button>
+```
+
+### Link
+
+<div className="preview flex items-center gap-4 p-6 border rounded-lg mb-4">
+  <button type="button" className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 text-primary underline-offset-4 hover:underline h-10 px-4 py-2">
+    Link
+  </button>
+</div>
+
+```tsx
+<Button variant="link">Link</Button>
+```
+
+### Icon
+
+<div className="preview flex items-center gap-4 p-6 border rounded-lg mb-4">
+  <button type="button" className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 w-10" aria-label="Submit">
+    <ChevronRight className="h-4 w-4" />
+  </button>
+</div>
+
+```tsx showLineNumbers
+import { ChevronRight } from "lucide-react"
+
+<Button variant="outline" size="icon" aria-label="Submit">
+  <ChevronRight className="h-4 w-4" />
+</Button>
+```
+
+### With Icon
+
+The spacing between the icon and the text is automatically adjusted based on the size of the button. You do not need any margin on the icon.
+
+<div className="preview flex items-center gap-4 p-6 border rounded-lg mb-4">
+  <button type="button" className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
+    <Mail className="h-4 w-4" />
+    Login with Email
+  </button>
+</div>
+
+```tsx showLineNumbers
+import { Mail } from "lucide-react"
+
+<Button>
+  <Mail className="h-4 w-4" />
+  Login with Email
+</Button>
+```
+
+### Rounded
+
+Use the `rounded-full` class to make the button fully rounded.
+
+<div className="preview flex items-center gap-4 p-6 border rounded-lg mb-4">
+  <button type="button" className="inline-flex items-center justify-center whitespace-nowrap rounded-full text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 w-10" aria-label="Next">
+    <ArrowUpRight className="h-4 w-4" />
+  </button>
+</div>
+
+```tsx showLineNumbers
+import { ArrowUpRight } from "lucide-react"
+
+<Button variant="outline" size="icon" className="rounded-full" aria-label="Next">
+  <ArrowUpRight className="h-4 w-4" />
+</Button>
+```
+
+### Loading
+
+<div className="preview flex items-center gap-4 p-6 border rounded-lg mb-4">
+  <button type="button" className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground h-10 px-4 py-2 opacity-50 cursor-not-allowed" disabled>
+    <Loader2 className="h-4 w-4 animate-spin" />
+    Please wait
+  </button>
+</div>
+
+```tsx showLineNumbers
+import { Loader2 } from "lucide-react"
+
+<Button disabled>
+  <Loader2 className="h-4 w-4 animate-spin" />
+  Please wait
+</Button>
+```
+
+### Link Component
+
+You can use the `asChild` prop to make another component look like a button. Here's an example of a link that looks like a button.
+
+```tsx showLineNumbers
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+
+export function LinkAsButton() {
+  return (
+    <Button asChild>
+      <Link href="/login">Login</Link>
+    </Button>
+  )
+}
+```
+
+## API Reference
+
+### Button
+
+The Button component accepts all standard HTML button attributes plus:
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `variant` | `"default" \| "destructive" \| "outline" \| "secondary" \| "ghost" \| "link"` | `"default"` | The visual style variant of the button |
+| `size` | `"default" \| "sm" \| "lg" \| "icon" \| "icon-sm" \| "icon-lg"` | `"default"` | The size of the button |
+| `asChild` | `boolean` | `false` | When true, the button will render as a Slot component, allowing you to use it with any element |
+
+## Changelog
+
+### 2025-09-24 - New sizes
+
+We have added two new sizes to the button component: `icon-sm` and `icon-lg`. These sizes are used to create icon buttons of different sizes.
+
+To add them to your existing button component, edit `components/ui/button.tsx` and add the following code under `size` in `buttonVariants`:
+
+```tsx showLineNumbers title="components/ui/button.tsx" {7-8}
+const buttonVariants = cva("...", {
+  variants: {
+    size: {
+      default: "h-10 px-4 py-2",
+      sm: "h-9 rounded-md px-3",
+      lg: "h-11 rounded-md px-8",
+      icon: "h-10 w-10",
+      "icon-sm": "h-8 w-8",
+      "icon-lg": "h-12 w-12",
+    },
+  },
+})
+```

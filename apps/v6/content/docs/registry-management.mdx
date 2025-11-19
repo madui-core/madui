@@ -1,0 +1,36 @@
+---
+title: Registry Management
+description: Add new components to the registry
+---
+
+## Registry Management
+
+Use the [Registry page](/registry) to add new components to the MadUI registry.
+
+The registry management interface allows you to:
+- Add new UI components, blocks, hooks, charts, and more
+- Automatically update the registry files
+- Trigger the registry build process
+
+### How to Add a Component
+
+1. Navigate to the [Registry page](/registry)
+2. Enter your component name (e.g., `my-button`)
+3. Select the registry type (UI, Block, Example, Hook, Lib, Chart, or Internal)
+4. Paste your component's TSX code
+5. Click "Add Component"
+
+The component will be:
+- Written to `/registry/new-york-v4/<type>/<component-name>.tsx`
+- Added to the appropriate `registry-<type>.ts` file
+- Built automatically via `pnpm registry:build`
+
+### Registry Types
+
+- **UI**: Reusable UI components
+- **Block**: Larger component blocks or compositions
+- **Example**: Example implementations
+- **Hook**: React hooks
+- **Lib**: Library utilities and helpers
+- **Chart**: Chart components
+- **Internal**: Internal components

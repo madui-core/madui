@@ -1,0 +1,181 @@
+---
+title: Input
+description: Displays a form input field or a component that looks like an input field.
+---
+
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+import { Step, Steps } from 'fumadocs-ui/components/steps';
+import { Callout } from 'fumadocs-ui/components/callout';
+
+## Preview
+
+<div className="preview flex min-h-[350px] w-full flex-col items-center justify-center gap-6 p-10 my-6 rounded-lg border bg-background">
+  <div className="w-full max-w-sm space-y-6">
+    <div className="space-y-2">
+      <input 
+        type="email" 
+        placeholder="Email" 
+        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all" 
+      />
+    </div>
+    <div className="space-y-2">
+      <label htmlFor="email-label" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Email</label>
+      <input 
+        type="email" 
+        id="email-label"
+        placeholder="name@example.com" 
+        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all" 
+      />
+    </div>
+    <div className="space-y-2">
+      <label htmlFor="disabled" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Disabled</label>
+      <input 
+        disabled 
+        type="email" 
+        id="disabled"
+        placeholder="Email" 
+        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all" 
+      />
+    </div>
+    <div className="flex w-full items-center space-x-2">
+      <input 
+        type="email" 
+        placeholder="Email" 
+        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all" 
+      />
+      <button 
+        type="submit" 
+        className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 cursor-pointer"
+      >
+        Subscribe
+      </button>
+    </div>
+  </div>
+</div>
+
+## Installation
+
+<Tabs items={['CLI', 'Manual']}>
+  <Tab value="CLI">
+    <Tabs items={['npm', 'pnpm', 'yarn', 'bun']}>
+      <Tab value="npm">
+        ```bash
+        npx madui@latest add input
+        ```
+      </Tab>
+      <Tab value="pnpm">
+        ```bash
+        pnpm dlx madui@latest add input
+        ```
+      </Tab>
+      <Tab value="yarn">
+        ```bash
+        npx madui@latest add input
+        ```
+      </Tab>
+      <Tab value="bun">
+        ```bash
+        bunx madui@latest add input
+        ```
+      </Tab>
+    </Tabs>
+  </Tab>
+  
+  <Tab value="Manual">
+    <Steps>
+      <Step>
+        ### Copy and paste the following code into your project
+        
+        ```tsx title="components/ui/input.tsx" showLineNumbers
+        import * as React from "react"
+
+        import { cn } from "@/lib/utils"
+
+        const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
+          ({ className, type, ...props }, ref) => {
+            return (
+              <input
+                type={type}
+                className={cn(
+                  "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+                  className
+                )}
+                ref={ref}
+                {...props}
+              />
+            )
+          }
+        )
+        Input.displayName = "Input"
+
+        export { Input }
+        ```
+      </Step>
+      
+      <Step>
+        ### Update the import paths to match your project setup
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+## Usage
+
+```tsx showLineNumbers
+import { Input } from "@/components/ui/input"
+```
+
+```tsx showLineNumbers
+<Input />
+```
+
+## Examples
+
+### Default
+
+```tsx showLineNumbers
+<Input type="email" placeholder="Email" />
+```
+
+### File
+
+```tsx showLineNumbers
+<div className="grid w-full max-w-sm items-center gap-1.5">
+  <Label htmlFor="picture">Picture</Label>
+  <Input id="picture" type="file" />
+</div>
+```
+
+### Disabled
+
+```tsx showLineNumbers
+<Input disabled type="email" placeholder="Email" />
+```
+
+### With Label
+
+```tsx showLineNumbers
+<div className="grid w-full max-w-sm items-center gap-1.5">
+  <Label htmlFor="email">Email</Label>
+  <Input type="email" id="email" placeholder="Email" />
+</div>
+```
+
+### With Button
+
+```tsx showLineNumbers
+<div className="flex w-full max-w-sm items-center space-x-2">
+  <Input type="email" placeholder="Email" />
+  <Button type="submit">Subscribe</Button>
+</div>
+```
+
+### With Text
+
+```tsx showLineNumbers
+<div className="grid w-full max-w-sm items-center gap-1.5">
+  <Label htmlFor="email-2">Email</Label>
+  <Input type="email" id="email-2" placeholder="Email" />
+  <p className="text-sm text-muted-foreground">Enter your email address.</p>
+</div>
+```

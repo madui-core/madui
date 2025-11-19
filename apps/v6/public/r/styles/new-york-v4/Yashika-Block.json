@@ -1,0 +1,12 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "Yashika-Block",
+  "type": "registry:ui",
+  "files": [
+    {
+      "path": "registry/new-york-v4/ui/Yashika-Block.tsx",
+      "content": "// components/ui/yashika-block.tsx\nimport * as React from \"react\"\n\nimport { cn } from \"@/lib/utils\"\n\ninterface YashikaBlockProps extends React.HTMLAttributes<HTMLDivElement> {\n  bgColor?: string\n  borderRadius?: string\n  size?: \"sm\" | \"md\" | \"lg\"\n  position?: \"left\" | \"center\" | \"right\"\n}\n\nexport function YashikaBlock({\n  bgColor = \"bg-pink-500\",\n  borderRadius = \"rounded-2xl\",\n  size = \"md\",\n  position = \"center\",\n  className,\n  ...props\n}: YashikaBlockProps) {\n  const sizeClasses = {\n    sm: \"w-24 h-24 text-sm\",\n    md: \"w-40 h-40 text-base\",\n    lg: \"w-60 h-60 text-lg\",\n  }[size]\n\n  const positionClasses = {\n    left: \"self-start\",\n    center: \"self-center\",\n    right: \"self-end\",\n  }[position]\n\n  return (\n    <div\n      className={cn(\n        \"flex items-center justify-center font-semibold text-white shadow-md transition-all\",\n        bgColor,\n        borderRadius,\n        sizeClasses,\n        positionClasses,\n        className\n      )}\n      {...props}\n    >\n      Yashika\n    </div>\n  )\n}\n\n",
+      "type": "registry:ui"
+    }
+  ]
+}

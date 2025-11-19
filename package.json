@@ -21,6 +21,11 @@
     "cli:build": "pnpm --filter=madui build",
     "cli:dev": "pnpm --filter=madui dev",
 
+    "www:dev": "pnpm --filter=www dev",
+    "www:build": "pnpm --filter=www build",
+    "v6:dev": "pnpm --filter=v6 dev",
+    "v6:build": "pnpm --filter=v6 build",
+
     "madui:dev": "turbo --filter=madui dev",
     "madui": "pnpm --filter=madui start:dev",
     "lint": "turbo run lint",
