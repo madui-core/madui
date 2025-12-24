@@ -1,3 +1,3 @@
 # MADUI
 
-side project started to create a copy of sadcn and make some improvement
+side project started to create component-library to serve fastbeautiful-ui components
